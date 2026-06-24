@@ -8,7 +8,7 @@ set(CMAKE_AUTOUIC ON)
 set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTORCC ON)
 
-find_package(Qt6 COMPONENTS Core Gui Qml Quick Multimedia REQUIRED)
+find_package(Qt6 COMPONENTS Core Gui Qml Quick REQUIRED)
 
 include_directories(${CMAKE_SOURCE_DIR}/src)
 
@@ -40,5 +40,4 @@ target_link_libraries(Vamp9POS PRIVATE
     Qt6::Gui
     Qt6::Qml
     Qt6::Quick
-    Qt6::Multimedia
 )

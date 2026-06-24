@@ -1,0 +1,7 @@
+build/
+dist/
+*.zip
+.vs/
+*.user
+CMakeSettings.json
+out/

@@ -19,6 +19,9 @@ public:
 
     Q_INVOKABLE void processScan(const QString& barcode);
     Q_INVOKABLE void checkout();
+    Q_INVOKABLE void playBeep();
+    Q_INVOKABLE void playError();
+    Q_INVOKABLE void playSuccess();
 
 signals:
     void cartChanged();
