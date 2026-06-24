@@ -1,4 +1,4 @@
-# Multicosas POS
+# Vamp9 POS
 
 Un sistema de Punto de Venta (POS) e Inventario moderno, con estética *Glassmorphism* y animaciones fluidas, diseñado para pequeños negocios.
 

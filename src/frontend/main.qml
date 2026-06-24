@@ -7,7 +7,7 @@ Window {
     width: 1280
     height: 720
     visible: true
-    title: "Multicosas POS"
+    title: "vamp9 POS"
     color: "#0f172a" 
 
     AudioSystem { id: audioSystem }

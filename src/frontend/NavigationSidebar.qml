@@ -14,7 +14,7 @@ GlassPanel {
         spacing: 15
 
         Text {
-            text: "Multicosas"
+            text: "vamp9"
             color: "#ffffff"
             font.pixelSize: 24
             font.bold: true

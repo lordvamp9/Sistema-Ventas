@@ -12,7 +12,7 @@ Item {
         spacing: 25
 
         Text {
-            text: "Dashboard | Multicosas"
+            text: "Dashboard | vamp9"
             color: "#ffffff"
             font.pixelSize: 34
             font.bold: true

@@ -16,7 +16,7 @@ int main(int argc, char *argv[])
     engine.rootContext()->setContextProperty("posController", &posController);
     engine.rootContext()->setContextProperty("inventorySystem", &inventorySystem);
 
-    const QUrl url(u"qrc:/vamp9/Multicosas/src/frontend/main.qml"_qs);
+    const QUrl url(u"qrc:/vamp9/Vamp9POS/src/frontend/main.qml"_qs);
     QObject::connect(&engine, &QQmlApplicationEngine::objectCreated,
                      &app, [url](QObject *obj, const QUrl &objUrl) {
         if (!obj && url == objUrl)
