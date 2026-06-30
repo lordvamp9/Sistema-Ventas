@@ -1,10 +1,23 @@
 # Vamp9 POS
 
-![License](https://img.shields.io/badge/License-MIT-blue.svg)
-![C++](https://img.shields.io/badge/C++-17-blue.svg?logo=c%2B%2B)
-![Qt](https://img.shields.io/badge/Qt-6-green.svg?logo=qt)
-![Platform](https://img.shields.io/badge/Platform-Windows-lightgray.svg?logo=windows)
+<div align="center">
+  <img src="https://img.shields.io/badge/vamp9-POS_Professional-0ea5e9?style=for-the-badge&logo=appstore&logoColor=white" alt="vamp9 POS" />
+</div>
 
+<br/>
+
+<div align="center">
+
+  [![Release](https://img.shields.io/github/v/release/lordvamp9/Sistema-Ventas?style=flat-square&color=0ea5e9)](https://github.com/lordvamp9/Sistema-Ventas/releases/latest)
+  [![Downloads](https://img.shields.io/github/downloads/lordvamp9/Sistema-Ventas/total?style=flat-square&color=16a34a)](https://github.com/lordvamp9/Sistema-Ventas/releases)
+  [![License](https://img.shields.io/github/license/lordvamp9/Sistema-Ventas?style=flat-square&color=0284c7)](LICENSE)
+  [![C++](https://img.shields.io/badge/C++-17-blue.svg?style=flat-square&logo=c%2B%2B)](https://isocpp.org/)
+  [![Qt](https://img.shields.io/badge/Qt-6-41CD52.svg?style=flat-square&logo=qt&logoColor=white)](https://www.qt.io/)
+  [![Platform](https://img.shields.io/badge/Platform-Windows_x64-0078D6.svg?style=flat-square&logo=windows&logoColor=white)](https://microsoft.com/)
+
+</div>
+
+---
 Un sistema de Punto de Venta (POS) e Inventario de grado profesional, diseñado para la eficiencia y velocidad en entornos de retail y supermercados.
 
 ## Características Principales
