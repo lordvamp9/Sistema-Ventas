@@ -10,8 +10,8 @@ Rectangle {
     Layout.fillWidth: true
     height: 80
     radius: 12
-    color: Qt.rgba(255, 255, 255, 0.08)
-    border.color: Qt.rgba(248, 113, 113, 0.3)
+    color: Theme.surface
+    border.color: Theme.danger
     border.width: 1
 
     RowLayout {
@@ -20,7 +20,7 @@ Rectangle {
         spacing: 15
 
         Image {
-            source: "https://www.svgrepo.com/show/521463/alert-circle.svg"
+            source: "qrc:/vamp9/Vamp9POS/src/assets/icons/alert-circle.svg"
             sourceSize: Qt.size(28, 28)
             Layout.preferredWidth: 28
             Layout.preferredHeight: 28
@@ -31,14 +31,16 @@ Rectangle {
             spacing: 2
             Text {
                 text: root.productName
-                color: "#ffffff"
-                font.pixelSize: 16
+                color: Theme.textPrimary
+                font.pixelSize: Theme.sizeMD
                 font.bold: true
+                font.family: Theme.font
             }
             Text {
                 text: "Velocidad: " + root.velocity + " | Restan: " + root.daysLeft + " dias"
-                color: "#94a3b8"
-                font.pixelSize: 12
+                color: Theme.textSecondary
+                font.pixelSize: Theme.sizeSM
+                font.family: Theme.font
             }
         }
     }

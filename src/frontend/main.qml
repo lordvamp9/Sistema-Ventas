@@ -20,7 +20,7 @@ Window {
             id: sidebar
             Layout.fillHeight: true
             Layout.preferredWidth: 260
-            onCurrentViewChanged: stackLayout.currentIndex = viewIndex
+            onCurrentViewChanged: function(viewIndex) { stackLayout.currentIndex = viewIndex }
         }
 
         StackLayout {
@@ -32,6 +32,7 @@ Window {
             Dashboard { id: dashboardView }
             POSView { id: posView; property var audioSystemRef: audioSystem }
             AdminView { id: adminView; property var audioSystemRef: audioSystem }
+            SettingsView { id: settingsView }
         }
     }
 }

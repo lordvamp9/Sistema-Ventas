@@ -5,9 +5,10 @@ import "components"
 
 Rectangle {
     id: root
-    color: "#0ea5e9" // vamp9 light blue brand color
+    color: Theme.brand // vamp9 light blue brand color
     
-    signal currentViewChanged(int viewIndex)
+    signal currentViewChanged(var viewIndex)
+    property int activeIndex: 0
 
     ColumnLayout {
         anchors.fill: parent
@@ -19,26 +20,37 @@ Rectangle {
             color: "#ffffff"
             font.pixelSize: 28
             font.bold: true
+            font.family: Theme.font
             Layout.alignment: Qt.AlignHCenter
             Layout.bottomMargin: 30
         }
 
         SidebarButton {
             text: "Dashboard"
-            iconSource: "https://www.svgrepo.com/show/522137/home.svg" 
-            onClicked: root.currentViewChanged(0)
+            iconSource: "qrc:/vamp9/Vamp9POS/src/assets/icons/home.svg" 
+            isActive: root.activeIndex === 0
+            onClicked: { root.activeIndex = 0; root.currentViewChanged(0) }
         }
 
         SidebarButton {
             text: "Caja (POS)"
-            iconSource: "https://www.svgrepo.com/show/521509/barcode.svg"
-            onClicked: root.currentViewChanged(1)
+            iconSource: "qrc:/vamp9/Vamp9POS/src/assets/icons/barcode.svg"
+            isActive: root.activeIndex === 1
+            onClicked: { root.activeIndex = 1; root.currentViewChanged(1) }
         }
 
         SidebarButton {
             text: "Administración"
-            iconSource: "https://www.svgrepo.com/show/521469/settings.svg"
-            onClicked: root.currentViewChanged(2)
+            iconSource: "qrc:/vamp9/Vamp9POS/src/assets/icons/package.svg"
+            isActive: root.activeIndex === 2
+            onClicked: { root.activeIndex = 2; root.currentViewChanged(2) }
+        }
+
+        SidebarButton {
+            text: "Configuración"
+            iconSource: "qrc:/vamp9/Vamp9POS/src/assets/icons/settings.svg"
+            isActive: root.activeIndex === 3
+            onClicked: { root.activeIndex = 3; root.currentViewChanged(3) }
         }
 
         Item { Layout.fillHeight: true } 
@@ -48,12 +60,25 @@ Rectangle {
         id: btn
         property string text: ""
         property string iconSource: ""
+        property bool isActive: false
         signal clicked()
 
         Layout.fillWidth: true
         height: 50
         radius: 8
-        color: mouseArea.containsMouse ? Qt.rgba(255, 255, 255, 0.2) : "transparent"
+        color: isActive ? Qt.rgba(255, 255, 255, 0.25) : (mouseArea.containsMouse ? Qt.rgba(255, 255, 255, 0.15) : "transparent")
+        
+        Behavior on color { ColorAnimation { duration: 150 } }
+
+        Rectangle {
+            visible: btn.isActive
+            width: 4; height: parent.height * 0.6
+            radius: 2
+            color: "#ffffff"
+            anchors.left: parent.left
+            anchors.leftMargin: 2
+            anchors.verticalCenter: parent.verticalCenter
+        }
 
         RowLayout {
             anchors.fill: parent
@@ -65,14 +90,14 @@ Rectangle {
                 sourceSize: Qt.size(24, 24)
                 Layout.preferredWidth: 24
                 Layout.preferredHeight: 24
-                // A bit hacky way to colorize SVG if needed, but white icons work well
             }
 
             Text {
                 text: btn.text
                 color: "#ffffff"
-                font.pixelSize: 18
+                font.pixelSize: Theme.sizeLG
                 font.bold: true
+                font.family: Theme.font
             }
         }
 
@@ -80,6 +105,7 @@ Rectangle {
             id: mouseArea
             anchors.fill: parent
             hoverEnabled: true
+            cursorShape: Qt.PointingHandCursor
             onClicked: btn.clicked()
         }
     }
