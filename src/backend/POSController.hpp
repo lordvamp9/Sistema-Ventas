@@ -19,6 +19,9 @@ public:
 
     Q_INVOKABLE void processScan(const QString& barcode);
     Q_INVOKABLE void checkout();
+    Q_INVOKABLE void clearCart();
+    Q_INVOKABLE void removeCartItem(int index);
+    
     Q_INVOKABLE void playBeep();
     Q_INVOKABLE void playError();
     Q_INVOKABLE void playSuccess();
@@ -29,6 +32,7 @@ signals:
     void checkoutCompleted();
 
 private:
+    void recalculateTotal();
     QVariantList m_cart;
     double m_total;
 };

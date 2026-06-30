@@ -30,7 +30,7 @@ qt_add_qml_module(Vamp9POS
         src/frontend/Dashboard.qml
         src/frontend/POSView.qml
         src/frontend/AdminView.qml
-        src/frontend/components/GlassPanel.qml
+        src/frontend/components/SolidCard.qml
         src/frontend/components/AlertCard.qml
         src/frontend/components/AudioSystem.qml
 )
@@ -40,4 +40,5 @@ target_link_libraries(Vamp9POS PRIVATE
     Qt6::Gui
     Qt6::Qml
     Qt6::Quick
+    winmm
 )

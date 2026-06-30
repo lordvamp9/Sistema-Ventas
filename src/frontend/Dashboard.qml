@@ -12,14 +12,10 @@ Item {
         spacing: 25
 
         Text {
-            text: "Dashboard | vamp9"
-            color: "#ffffff"
+            text: "Dashboard | vamp9 POS"
+            color: "#0f172a"
             font.pixelSize: 34
             font.bold: true
-            
-            opacity: 0
-            NumberAnimation on opacity { to: 1; duration: 1200; easing.type: Easing.OutCubic }
-            NumberAnimation on y { from: -20; to: 0; duration: 1000; easing.type: Easing.OutBack }
         }
 
         RowLayout {
@@ -27,20 +23,20 @@ Item {
             Layout.fillHeight: true
             spacing: 25
 
-            GlassPanel {
+            SolidCard {
                 Layout.fillWidth: true
                 Layout.fillHeight: true
                 Layout.preferredWidth: 65 
                 
                 Text {
                     anchors.centerIn: parent
-                    text: "[ Espacio para Gráficos ]"
+                    text: "[ Gráficos de Ventas ]"
                     color: "#94a3b8"
                     font.pixelSize: 18
                 }
             }
 
-            GlassPanel {
+            SolidCard {
                 Layout.fillWidth: true
                 Layout.fillHeight: true
                 Layout.preferredWidth: 35 
@@ -59,7 +55,7 @@ Item {
                         }
                         Text {
                             text: "Stock Crítico"
-                            color: "#f87171" 
+                            color: "#ef4444" 
                             font.pixelSize: 22
                             font.bold: true
                         }

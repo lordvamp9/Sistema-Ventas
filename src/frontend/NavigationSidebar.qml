@@ -3,9 +3,10 @@ import QtQuick.Layouts
 import QtQuick.Controls
 import "components"
 
-GlassPanel {
+Rectangle {
     id: root
-    radius: 0
+    color: "#0ea5e9" // vamp9 light blue brand color
+    
     signal currentViewChanged(int viewIndex)
 
     ColumnLayout {
@@ -14,9 +15,9 @@ GlassPanel {
         spacing: 15
 
         Text {
-            text: "vamp9"
+            text: "vamp9 POS"
             color: "#ffffff"
-            font.pixelSize: 24
+            font.pixelSize: 28
             font.bold: true
             Layout.alignment: Qt.AlignHCenter
             Layout.bottomMargin: 30
@@ -51,8 +52,8 @@ GlassPanel {
 
         Layout.fillWidth: true
         height: 50
-        radius: 10
-        color: mouseArea.containsMouse ? Qt.rgba(255, 255, 255, 0.1) : "transparent"
+        radius: 8
+        color: mouseArea.containsMouse ? Qt.rgba(255, 255, 255, 0.2) : "transparent"
 
         RowLayout {
             anchors.fill: parent
@@ -64,12 +65,14 @@ GlassPanel {
                 sourceSize: Qt.size(24, 24)
                 Layout.preferredWidth: 24
                 Layout.preferredHeight: 24
+                // A bit hacky way to colorize SVG if needed, but white icons work well
             }
 
             Text {
                 text: btn.text
-                color: "#e2e8f0"
-                font.pixelSize: 16
+                color: "#ffffff"
+                font.pixelSize: 18
+                font.bold: true
             }
         }
 
