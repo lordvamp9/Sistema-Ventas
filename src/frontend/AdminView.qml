@@ -1,95 +1,111 @@
-import QtQuick
-import QtQuick.Layouts
-import QtQuick.Controls
+import QtQuick 2.15
+import QtQuick.Layouts 1.15
+import QtQuick.Controls 2.15
+import QtQuick.Dialogs
 import "components"
 
 Item {
     id: root
+    property var themeRef: null
 
-    property var audioSystemRef: null
-    
-    // Simple mock model for demonstration, in a real app this would come from a QAbstractTableModel in C++
-    ListModel {
-        id: productModel
+    ListModel { id: productModel }
+
+    function loadProducts(filter) {
+        productModel.clear()
+        var list = inventorySystem.searchByName(filter || "")
+        for (var i = 0; i < list.length; i++) productModel.append(list[i])
     }
 
-    function loadProducts() {
-        productModel.clear();
-        var prods = inventorySystem.searchByName("");
-        for(var i=0; i<prods.length; ++i) {
-            productModel.append(prods[i]);
-        }
-    }
-
-    Component.onCompleted: loadProducts()
+    Component.onCompleted: loadProducts("")
 
     ColumnLayout {
         anchors.fill: parent
-        anchors.margins: 25
-        spacing: 20
+        anchors.margins: 24
+        spacing: 16
 
-        Text {
-            text: "Administración de Inventario"
-            font.pixelSize: Theme.size3XL
-            font.bold: true
-            font.family: Theme.font
-            color: Theme.textPrimary
+        // ── Header ────────────────────────────────────────────
+        RowLayout {
+            Layout.fillWidth: true
+
+            Text {
+                text: "Inventario"
+                font.pixelSize: 30; font.bold: true; font.family: "Inter"; color: "#0f172a"
+                Layout.fillWidth: true
+            }
+
+            Rectangle {
+                width: 170; height: 40; radius: 10
+                color: addBtnHover.containsMouse ? "#0284c7" : "#0ea5e9"
+                Behavior on color { ColorAnimation { duration: 80 } }
+
+                Text { anchors.centerIn: parent; text: "+ Nuevo Producto"; font.pixelSize: 14; font.bold: true; font.family: "Inter"; color: "#ffffff" }
+                MouseArea { id: addBtnHover; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: newProductDrawer.open() }
+            }
         }
 
-        SolidCard {
+        // ── Search toolbar ────────────────────────────────────
+        Rectangle {
+            Layout.fillWidth: true
+            height: 48
+            radius: 10
+            color: "#ffffff"
+            border.color: "#e2e8f0"
+            border.width: 1
+
+            RowLayout {
+                anchors.fill: parent
+                anchors.leftMargin: 14
+                anchors.rightMargin: 14
+                spacing: 10
+
+                Text { text: "🔍"; font.pixelSize: 15 }
+                TextField {
+                    id: searchBox
+                    Layout.fillWidth: true
+                    placeholderText: "Buscar producto..."
+                    font.pixelSize: 14; font.family: "Inter"
+                    background: Rectangle { color: "transparent" }
+                    onTextChanged: loadProducts(text)
+                }
+            }
+        }
+
+        // ── Products table ────────────────────────────────────
+        Rectangle {
             Layout.fillWidth: true
             Layout.fillHeight: true
-            backgroundColor: Theme.surface
+            radius: 12
+            color: "#ffffff"
+            border.color: "#e2e8f0"
+            border.width: 1
+            clip: true
 
             ColumnLayout {
                 anchors.fill: parent
-                anchors.margins: 20
-                spacing: 15
+                spacing: 0
 
-                RowLayout {
+                // Table header row
+                Rectangle {
                     Layout.fillWidth: true
-                    spacing: 15
-                    
-                    TextField {
-                        id: searchField
-                        placeholderText: "Buscar producto..."
-                        font.pixelSize: Theme.sizeMD
-                        font.family: Theme.font
-                        Layout.preferredWidth: 300
-                        background: Rectangle { color: Theme.bg; border.color: Theme.border; radius: 8 }
-                        onTextChanged: {
-                            productModel.clear()
-                            var prods = inventorySystem.searchByName(text)
-                            for(var i=0; i<prods.length; ++i) {
-                                productModel.append(prods[i])
-                            }
-                        }
-                    }
-                    
-                    Item { Layout.fillWidth: true }
-                    
-                    ActionButton {
-                        text: "Nuevo Producto"
-                        buttonColor: Theme.brand
-                        Layout.preferredWidth: 200
-                        Layout.preferredHeight: 45
-                        onClicked: newProductDrawer.open()
+                    height: 40
+                    color: "#f8fafc"
+
+                    RowLayout {
+                        anchors.fill: parent
+                        anchors.leftMargin: 14
+                        anchors.rightMargin: 14
+                        spacing: 0
+                        Text { text: "#";         font.pixelSize: 12; font.bold: true; font.family: "Inter"; color: "#475569"; Layout.preferredWidth: 40 }
+                        Text { text: "Nombre";    font.pixelSize: 12; font.bold: true; font.family: "Inter"; color: "#475569"; Layout.fillWidth: true }
+                        Text { text: "Categoría"; font.pixelSize: 12; font.bold: true; font.family: "Inter"; color: "#475569"; Layout.preferredWidth: 130 }
+                        Text { text: "Código";    font.pixelSize: 12; font.bold: true; font.family: "Inter"; color: "#475569"; Layout.preferredWidth: 120 }
+                        Text { text: "Precio";    font.pixelSize: 12; font.bold: true; font.family: "Inter"; color: "#475569"; Layout.preferredWidth: 90;  horizontalAlignment: Text.AlignRight }
+                        Text { text: "Stock";     font.pixelSize: 12; font.bold: true; font.family: "Inter"; color: "#475569"; Layout.preferredWidth: 60;  horizontalAlignment: Text.AlignRight }
+                        Text { text: "Acciones";  font.pixelSize: 12; font.bold: true; font.family: "Inter"; color: "#475569"; Layout.preferredWidth: 100; horizontalAlignment: Text.AlignHCenter }
                     }
                 }
 
-                Rectangle { Layout.fillWidth: true; height: 1; color: Theme.border }
-
-                // Headers
-                RowLayout {
-                    Layout.fillWidth: true
-                    anchors.leftMargin: 10
-                    anchors.rightMargin: 10
-                    Text { text: "ID"; font.bold:true; font.family: Theme.font; Layout.preferredWidth: 40 }
-                    Text { text: "Nombre"; font.bold:true; font.family: Theme.font; Layout.fillWidth: true }
-                    Text { text: "Código"; font.bold:true; font.family: Theme.font; Layout.preferredWidth: 150 }
-                    Text { text: "Precio"; font.bold:true; font.family: Theme.font; Layout.preferredWidth: 100 }
-                    Text { text: "Acciones"; font.bold:true; font.family: Theme.font; Layout.preferredWidth: 150 }
-                }
+                Rectangle { Layout.fillWidth: true; height: 1; color: "#e2e8f0" }
 
                 ListView {
                     id: productList
@@ -97,40 +113,128 @@ Item {
                     Layout.fillHeight: true
                     clip: true
                     model: productModel
-                    spacing: 5
-                    
+                    spacing: 0
+
                     delegate: Rectangle {
                         width: ListView.view.width
                         height: 50
-                        color: index % 2 === 0 ? Theme.surface : Theme.bg
-                        border.color: Theme.border
-                        radius: 8
+                        color: index % 2 === 0 ? "#ffffff" : "#f8fafc"
+                        Rectangle { anchors.bottom: parent.bottom; width: parent.width; height: 1; color: "#e2e8f0" }
 
                         RowLayout {
                             anchors.fill: parent
-                            anchors.margins: 10
-                            
-                            Text { text: model.id; font.family: Theme.font; Layout.preferredWidth: 40 }
-                            Text { text: model.name; font.family: Theme.font; Layout.fillWidth: true }
-                            Text { text: model.barcode; font.family: Theme.font; Layout.preferredWidth: 150 }
-                            Text { text: "$" + model.price; font.family: Theme.font; Layout.preferredWidth: 100 }
-                            
+                            anchors.leftMargin: 14
+                            anchors.rightMargin: 14
+                            spacing: 0
+
+                            Text { text: model.id;       font.pixelSize: 13; font.family: "Inter"; color: "#94a3b8"; Layout.preferredWidth: 40 }
+                            Text { text: model.name;     font.pixelSize: 14; font.family: "Inter"; color: "#0f172a"; Layout.fillWidth: true; elide: Text.ElideRight }
+                            Text { text: model.category || "—"; font.pixelSize: 13; font.family: "Inter"; color: "#475569"; Layout.preferredWidth: 130; elide: Text.ElideRight }
+                            Text { text: model.barcode;  font.pixelSize: 13; font.family: "Inter"; color: "#94a3b8"; Layout.preferredWidth: 120; elide: Text.ElideRight }
+                            Text { text: "$" + model.price; font.pixelSize: 14; font.bold: true; font.family: "Inter"; color: "#0f172a"; Layout.preferredWidth: 90; horizontalAlignment: Text.AlignRight }
+                            Text { text: ""; font.pixelSize: 13; font.family: "Inter"; color: "#475569"; Layout.preferredWidth: 60; horizontalAlignment: Text.AlignRight }
+
                             RowLayout {
-                                Layout.preferredWidth: 150
-                                spacing: 10
-                                
-                                ActionButton {
-                                    text: "Reponer"
-                                    buttonColor: Theme.success
-                                    textSize: Theme.sizeSM
-                                    Layout.preferredWidth: 80
-                                    Layout.preferredHeight: 30
-                                    onClicked: {
-                                        restockPopup.productId = model.id
-                                        restockPopup.productName = model.name
-                                        restockPopup.open()
+                                Layout.preferredWidth: 100
+                                Layout.alignment: Qt.AlignHCenter
+                                spacing: 6
+
+                                Rectangle {
+                                    width: 72; height: 30; radius: 6
+                                    color: repHover.containsMouse ? "#15803d" : "#16a34a"
+                                    Behavior on color { ColorAnimation { duration: 80 } }
+                                    Text { anchors.centerIn: parent; text: "Reponer"; font.pixelSize: 12; font.bold: true; font.family: "Inter"; color: "#ffffff" }
+                                    MouseArea {
+                                        id: repHover; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor
+                                        onClicked: {
+                                            restockPopup.targetId   = model.id
+                                            restockPopup.targetName = model.name
+                                            restockPopup.open()
+                                        }
                                     }
                                 }
+                            }
+                        }
+                    }
+
+                    Text {
+                        anchors.centerIn: parent
+                        visible: productList.count === 0
+                        text: "No hay productos"
+                        font.pixelSize: 15; font.family: "Inter"; color: "#94a3b8"
+                    }
+                }
+            }
+        }
+    }
+
+    // ── New Product Drawer ────────────────────────────────────
+    Drawer {
+        id: newProductDrawer
+        width: 380
+        height: root.height
+        edge: Qt.RightEdge
+        background: Rectangle { color: "#ffffff"; border.color: "#e2e8f0" }
+
+        ColumnLayout {
+            anchors.fill: parent
+            anchors.margins: 24
+            spacing: 14
+
+            Text { text: "Nuevo Producto"; font.pixelSize: 22; font.bold: true; font.family: "Inter"; color: "#0f172a" }
+            Rectangle { Layout.fillWidth: true; height: 1; color: "#e2e8f0" }
+
+            TextField { id: fName;     Layout.fillWidth: true; height: 44; placeholderText: "Nombre *";           font.pixelSize: 14; font.family: "Inter"; background: Rectangle { radius: 8; color: "#f8fafc"; border.color: "#e2e8f0" } }
+            TextField { id: fCategory; Layout.fillWidth: true; height: 44; placeholderText: "Categoría";          font.pixelSize: 14; font.family: "Inter"; background: Rectangle { radius: 8; color: "#f8fafc"; border.color: "#e2e8f0" } }
+            TextField { id: fBarcode;  Layout.fillWidth: true; height: 44; placeholderText: "Código de Barras *"; font.pixelSize: 14; font.family: "Inter"; background: Rectangle { radius: 8; color: "#f8fafc"; border.color: "#e2e8f0" } }
+            TextField {
+                id: fPrice
+                Layout.fillWidth: true; height: 44
+                placeholderText: "Precio ($) *"
+                font.pixelSize: 14; font.family: "Inter"
+                inputMethodHints: Qt.ImhDigitsOnly
+                background: Rectangle { radius: 8; color: "#f8fafc"; border.color: "#e2e8f0" }
+            }
+            TextField {
+                id: fStock
+                Layout.fillWidth: true; height: 44
+                placeholderText: "Stock inicial"
+                font.pixelSize: 14; font.family: "Inter"
+                inputMethodHints: Qt.ImhDigitsOnly
+                background: Rectangle { radius: 8; color: "#f8fafc"; border.color: "#e2e8f0" }
+            }
+
+            Item { Layout.fillHeight: true }
+
+            RowLayout {
+                Layout.fillWidth: true
+                spacing: 10
+
+                Rectangle {
+                    Layout.fillWidth: true; height: 44; radius: 10
+                    color: cancelDrwHover.containsMouse ? "#e2e8f0" : "#f8fafc"
+                    border.color: "#e2e8f0"
+                    Text { anchors.centerIn: parent; text: "Cancelar"; font.pixelSize: 14; font.bold: true; font.family: "Inter"; color: "#475569" }
+                    MouseArea { id: cancelDrwHover; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: newProductDrawer.close() }
+                }
+
+                Rectangle {
+                    Layout.fillWidth: true; height: 44; radius: 10
+                    color: saveDrwHover.containsMouse ? "#0284c7" : "#0ea5e9"
+                    Behavior on color { ColorAnimation { duration: 80 } }
+                    Text { anchors.centerIn: parent; text: "Guardar"; font.pixelSize: 14; font.bold: true; font.family: "Inter"; color: "#ffffff" }
+                    MouseArea {
+                        id: saveDrwHover; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor
+                        onClicked: {
+                            if (fName.text.length > 0 && fBarcode.text.length > 0) {
+                                inventorySystem.addNewProduct(
+                                    fName.text, fCategory.text, fBarcode.text,
+                                    parseFloat(fPrice.text || "0"),
+                                    parseInt(fStock.text || "0")
+                                )
+                                fName.text = ""; fCategory.text = ""; fBarcode.text = ""; fPrice.text = ""; fStock.text = ""
+                                loadProducts(searchBox.text)
+                                newProductDrawer.close()
                             }
                         }
                     }
@@ -139,55 +243,64 @@ Item {
         }
     }
 
-    // New Product Drawer
-    Drawer {
-        id: newProductDrawer
-        width: 400
-        height: parent.height
-        edge: Qt.RightEdge
-        
-        background: Rectangle {
-            color: Theme.surface
-            border.color: Theme.border
-        }
+    // ── Restock Popup ─────────────────────────────────────────
+    Popup {
+        id: restockPopup
+        property int    targetId:   -1
+        property string targetName: ""
+
+        anchors.centerIn: Overlay.overlay
+        width: 320; height: 230
+        modal: true; focus: true
+        background: Rectangle { color: "#ffffff"; radius: 14; border.color: "#e2e8f0" }
 
         ColumnLayout {
             anchors.fill: parent
-            anchors.margins: 20
-            spacing: 20
+            anchors.margins: 24
+            spacing: 14
 
-            Text { text: "Nuevo Producto"; font.pixelSize: Theme.size2XL; font.bold: true; font.family: Theme.font }
-            Rectangle { Layout.fillWidth: true; height: 1; color: Theme.border }
+            Text { text: "Reponer Stock"; font.pixelSize: 20; font.bold: true; font.family: "Inter"; color: "#0f172a" }
+            Text { text: restockPopup.targetName; font.pixelSize: 13; font.family: "Inter"; color: "#475569"; elide: Text.ElideRight; Layout.fillWidth: true }
 
-            TextField { id: pName; placeholderText: "Nombre"; Layout.fillWidth: true }
-            TextField { id: pCat; placeholderText: "Categoría"; Layout.fillWidth: true }
-            TextField { id: pBar; placeholderText: "Código de Barras"; Layout.fillWidth: true }
-            TextField { id: pPrice; placeholderText: "Precio ($)"; Layout.fillWidth: true; validator: RegularExpressionValidator { regularExpression: /^[0-9]+$/ } }
-            TextField { id: pStock; placeholderText: "Stock Inicial"; Layout.fillWidth: true; validator: RegularExpressionValidator { regularExpression: /^[0-9]+$/ } }
+            TextField {
+                id: restockQtyField
+                Layout.fillWidth: true; height: 48
+                placeholderText: "Cantidad a agregar"
+                font.pixelSize: 18; font.family: "Inter"
+                horizontalAlignment: TextInput.AlignRight
+                inputMethodHints: Qt.ImhDigitsOnly
+                validator: RegularExpressionValidator { regularExpression: /^\d+$/ }
+                background: Rectangle { radius: 8; color: "#f8fafc"; border.color: "#e2e8f0" }
+            }
 
             Item { Layout.fillHeight: true }
 
             RowLayout {
                 Layout.fillWidth: true
-                ActionButton {
-                    text: "Cancelar"
-                    buttonColor: Theme.border
-                    textColor: Theme.textPrimary
-                    Layout.fillWidth: true
-                    Layout.preferredHeight: 50
-                    onClicked: newProductDrawer.close()
+                spacing: 10
+
+                Rectangle {
+                    Layout.fillWidth: true; height: 42; radius: 8
+                    color: cancelRsHover.containsMouse ? "#e2e8f0" : "#f8fafc"
+                    border.color: "#e2e8f0"
+                    Text { anchors.centerIn: parent; text: "Cancelar"; font.pixelSize: 14; font.bold: true; font.family: "Inter"; color: "#475569" }
+                    MouseArea { id: cancelRsHover; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: restockPopup.close() }
                 }
-                ActionButton {
-                    text: "Guardar"
-                    buttonColor: Theme.brand
-                    Layout.fillWidth: true
-                    Layout.preferredHeight: 50
-                    onClicked: {
-                        if (pName.text !== "" && pBar.text !== "") {
-                            inventorySystem.addNewProduct(pName.text, pCat.text, pBar.text, parseFloat(pPrice.text || "0"), parseInt(pStock.text || "0"))
-                            root.loadProducts()
-                            pName.text = ""; pCat.text = ""; pBar.text = ""; pPrice.text = ""; pStock.text = "";
-                            newProductDrawer.close()
+
+                Rectangle {
+                    Layout.fillWidth: true; height: 42; radius: 8
+                    color: confirmRsHover.containsMouse ? "#15803d" : "#16a34a"
+                    Behavior on color { ColorAnimation { duration: 80 } }
+                    Text { anchors.centerIn: parent; text: "Confirmar"; font.pixelSize: 14; font.bold: true; font.family: "Inter"; color: "#ffffff" }
+                    MouseArea {
+                        id: confirmRsHover; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor
+                        onClicked: {
+                            if (restockQtyField.text.length > 0) {
+                                inventorySystem.restockProduct(restockPopup.targetId, parseInt(restockQtyField.text))
+                                restockQtyField.text = ""
+                                restockPopup.close()
+                                loadProducts(searchBox.text)
+                            }
                         }
                     }
                 }
@@ -195,64 +308,10 @@ Item {
         }
     }
 
-    // Restock Popup
-    Popup {
-        id: restockPopup
-        width: 300
-        height: 250
-        anchors.centerIn: parent
-        modal: true
-        focus: true
-        
-        property int productId: -1
-        property string productName: ""
-
-        background: Rectangle { color: Theme.surface; radius: 12; border.color: Theme.border }
-
-        ColumnLayout {
-            anchors.fill: parent
-            anchors.margins: 20
-            spacing: 15
-
-            Text { text: "Reponer Stock"; font.pixelSize: Theme.sizeXL; font.bold: true; font.family: Theme.font }
-            Text { text: restockPopup.productName; font.pixelSize: Theme.sizeMD; font.family: Theme.font; color: Theme.textSecondary }
-            
-            TextField {
-                id: restockQty
-                placeholderText: "Cantidad a agregar"
-                validator: RegularExpressionValidator { regularExpression: /^[0-9]+$/ }
-                Layout.fillWidth: true
-                font.pixelSize: Theme.sizeLG
-                font.family: Theme.font
-            }
-
-            Item { Layout.fillHeight: true }
-
-            RowLayout {
-                Layout.fillWidth: true
-                ActionButton {
-                    text: "Cancelar"
-                    buttonColor: Theme.border
-                    textColor: Theme.textPrimary
-                    Layout.fillWidth: true
-                    Layout.preferredHeight: 40
-                    onClicked: restockPopup.close()
-                }
-                ActionButton {
-                    text: "Confirmar"
-                    buttonColor: Theme.success
-                    Layout.fillWidth: true
-                    Layout.preferredHeight: 40
-                    onClicked: {
-                        if(restockQty.text !== "") {
-                            inventorySystem.restockProduct(restockPopup.productId, parseInt(restockQty.text))
-                            restockQty.text = ""
-                            restockPopup.close()
-                            root.loadProducts()
-                        }
-                    }
-                }
-            }
-        }
+    FileDialog {
+        id: importDialog
+        title: "Importar Catálogo CSV"
+        nameFilters: ["CSV (*.csv)"]
+        onAccepted: inventorySystem.importFromCSV(selectedFile)
     }
 }

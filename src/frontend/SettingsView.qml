@@ -1,186 +1,179 @@
-import QtQuick
-import QtQuick.Layouts
-import QtQuick.Controls
+import QtQuick 2.15
+import QtQuick.Layouts 1.15
+import QtQuick.Controls 2.15
 import QtQuick.Dialogs
-import "components"
 
 Item {
     id: root
+    property var themeRef: null
 
     ScrollView {
         anchors.fill: parent
-        anchors.margins: 20
+        anchors.margins: 24
         clip: true
-        
+        ScrollBar.vertical.policy: ScrollBar.AsNeeded
+        ScrollBar.horizontal.policy: ScrollBar.AlwaysOff
+
         ColumnLayout {
             width: parent.width
-            spacing: 30
+            spacing: 20
 
             Text {
                 text: "Configuración"
-                font.pixelSize: Theme.size3XL
-                font.bold: true
-                font.family: Theme.font
-                color: Theme.textPrimary
+                font.pixelSize: 30; font.bold: true; font.family: "Inter"; color: "#0f172a"
             }
 
-            // General Settings
-            SolidCard {
+            // ── General ───────────────────────────────────────
+            Rectangle {
                 Layout.fillWidth: true
-                Layout.preferredHeight: 300
-                backgroundColor: Theme.surface
-                
+                implicitHeight: genLayout.implicitHeight + 40
+                radius: 12; color: "#ffffff"; border.color: "#e2e8f0"; border.width: 1
+
                 ColumnLayout {
+                    id: genLayout
                     anchors.fill: parent
                     anchors.margins: 20
-                    spacing: 15
+                    spacing: 14
 
-                    Text {
-                        text: "General"
-                        font.pixelSize: Theme.sizeXL
-                        font.bold: true
-                        font.family: Theme.font
-                        color: Theme.brand
-                    }
-                    
-                    Rectangle { Layout.fillWidth: true; height: 1; color: Theme.border }
+                    Text { text: "General"; font.pixelSize: 17; font.bold: true; font.family: "Inter"; color: "#0ea5e9" }
+                    Rectangle { Layout.fillWidth: true; height: 1; color: "#e2e8f0" }
 
                     RowLayout {
                         Layout.fillWidth: true
-                        Text { text: "Nombre del Local:"; font.pixelSize: Theme.sizeMD; font.family: Theme.font; Layout.preferredWidth: 200 }
-                        TextField { 
-                            id: storeNameField
-                            text: settingsManager.storeName 
-                            Layout.fillWidth: true
-                            font.family: Theme.font
+                        Text { text: "Nombre del Local"; font.pixelSize: 14; font.family: "Inter"; color: "#475569"; Layout.preferredWidth: 220 }
+                        TextField {
+                            id: storeNameInput
+                            text: settingsManager ? settingsManager.storeName : ""
+                            font.pixelSize: 14; font.family: "Inter"
+                            height: 40; Layout.fillWidth: true
+                            background: Rectangle { radius: 8; color: "#f8fafc"; border.color: "#e2e8f0" }
                         }
                     }
 
                     RowLayout {
                         Layout.fillWidth: true
-                        Text { text: "Nombre del Cajero:"; font.pixelSize: Theme.sizeMD; font.family: Theme.font; Layout.preferredWidth: 200 }
-                        TextField { 
-                            id: cashierNameField
-                            text: settingsManager.cashierName 
-                            Layout.fillWidth: true
-                            font.family: Theme.font
+                        Text { text: "Nombre del Cajero"; font.pixelSize: 14; font.family: "Inter"; color: "#475569"; Layout.preferredWidth: 220 }
+                        TextField {
+                            id: cashierInput
+                            text: settingsManager ? settingsManager.cashierName : ""
+                            font.pixelSize: 14; font.family: "Inter"
+                            height: 40; Layout.fillWidth: true
+                            background: Rectangle { radius: 8; color: "#f8fafc"; border.color: "#e2e8f0" }
                         }
                     }
 
                     RowLayout {
                         Layout.fillWidth: true
-                        Text { text: "Días Umbral Stock Crítico:"; font.pixelSize: Theme.sizeMD; font.family: Theme.font; Layout.preferredWidth: 200 }
+                        Text { text: "Días umbral stock crítico"; font.pixelSize: 14; font.family: "Inter"; color: "#475569"; Layout.preferredWidth: 220 }
                         SpinBox {
-                            id: stockDaysField
-                            value: settingsManager.criticalStockDays
+                            id: criticalDaysInput
                             from: 1; to: 30
-                            font.family: Theme.font
+                            value: settingsManager ? settingsManager.criticalStockDays : 3
+                            font.pixelSize: 14; font.family: "Inter"
                         }
                     }
-                    
-                    Item { Layout.fillHeight: true }
                 }
             }
 
-            // Actions Settings
-            SolidCard {
+            // ── Data management ───────────────────────────────
+            Rectangle {
                 Layout.fillWidth: true
-                Layout.preferredHeight: 250
-                backgroundColor: Theme.surface
-                
+                implicitHeight: dataLayout.implicitHeight + 40
+                radius: 12; color: "#ffffff"; border.color: "#e2e8f0"; border.width: 1
+
                 ColumnLayout {
+                    id: dataLayout
                     anchors.fill: parent
                     anchors.margins: 20
-                    spacing: 15
+                    spacing: 14
+
+                    Text { text: "Datos e Inventario"; font.pixelSize: 17; font.bold: true; font.family: "Inter"; color: "#0ea5e9" }
+                    Rectangle { Layout.fillWidth: true; height: 1; color: "#e2e8f0" }
 
                     Text {
-                        text: "Base de Datos y Respaldo"
-                        font.pixelSize: Theme.sizeXL
-                        font.bold: true
-                        font.family: Theme.font
-                        color: Theme.brand
+                        text: "Importa catálogo desde CSV (columnas: nombre, categoría, barcode, precio, stock) o exporta el inventario actual y el historial de ventas."
+                        font.pixelSize: 13; font.family: "Inter"; color: "#475569"
+                        wrapMode: Text.WordWrap; Layout.fillWidth: true
                     }
-                    
-                    Rectangle { Layout.fillWidth: true; height: 1; color: Theme.border }
 
                     RowLayout {
                         Layout.fillWidth: true
-                        spacing: 20
-                        
-                        ActionButton {
-                            text: "Importar Catálogo (CSV)"
-                            buttonColor: Theme.brandDark
-                            Layout.fillWidth: true
-                            Layout.preferredHeight: 50
-                            onClicked: importDialog.open()
-                        }
-                        
-                        ActionButton {
-                            text: "Exportar Inventario (CSV)"
-                            buttonColor: Theme.brandDark
-                            Layout.fillWidth: true
-                            Layout.preferredHeight: 50
-                            onClicked: exportInvDialog.open()
+                        spacing: 12
+
+                        Rectangle {
+                            height: 42; Layout.preferredWidth: 190; radius: 10
+                            color: impHover.containsMouse ? "#0284c7" : "#0369a1"
+                            Behavior on color { ColorAnimation { duration: 80 } }
+                            Text { anchors.centerIn: parent; text: "⬆  Importar CSV"; font.pixelSize: 13; font.bold: true; font.family: "Inter"; color: "#ffffff" }
+                            MouseArea { id: impHover; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: importDialog.open() }
                         }
 
-                        ActionButton {
-                            text: "Exportar Ventas (CSV)"
-                            buttonColor: Theme.success
-                            Layout.fillWidth: true
-                            Layout.preferredHeight: 50
-                            onClicked: exportSalesDialog.open()
+                        Rectangle {
+                            height: 42; Layout.preferredWidth: 200; radius: 10
+                            color: expInvHover.containsMouse ? "#0284c7" : "#0ea5e9"
+                            Behavior on color { ColorAnimation { duration: 80 } }
+                            Text { anchors.centerIn: parent; text: "⬇  Exportar Inventario"; font.pixelSize: 13; font.bold: true; font.family: "Inter"; color: "#ffffff" }
+                            MouseArea { id: expInvHover; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: exportInvDialog.open() }
+                        }
+
+                        Rectangle {
+                            height: 42; Layout.preferredWidth: 180; radius: 10
+                            color: expSalHover.containsMouse ? "#15803d" : "#16a34a"
+                            Behavior on color { ColorAnimation { duration: 80 } }
+                            Text { anchors.centerIn: parent; text: "📊  Exportar Ventas"; font.pixelSize: 13; font.bold: true; font.family: "Inter"; color: "#ffffff" }
+                            MouseArea { id: expSalHover; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: exportSalesDialog.open() }
                         }
                     }
-                    
-                    Item { Layout.fillHeight: true }
                 }
             }
 
-            // Save Button
-            ActionButton {
-                text: "Guardar Configuración"
-                buttonColor: Theme.success
+            // ── Save button ───────────────────────────────────
+            Rectangle {
                 Layout.fillWidth: true
-                Layout.preferredHeight: 60
-                textSize: Theme.sizeLG
-                onClicked: {
-                    settingsManager.storeName = storeNameField.text
-                    settingsManager.cashierName = cashierNameField.text
-                    settingsManager.criticalStockDays = stockDaysField.value
-                    settingsManager.saveSettings()
+                height: 52
+                radius: 10
+                color: saveHover.containsMouse ? "#15803d" : "#16a34a"
+                Behavior on color { ColorAnimation { duration: 80 } }
+
+                Text { anchors.centerIn: parent; text: "✓  Guardar Configuración"; font.pixelSize: 15; font.bold: true; font.family: "Inter"; color: "#ffffff" }
+                MouseArea {
+                    id: saveHover; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor
+                    onClicked: {
+                        if (settingsManager) {
+                            settingsManager.storeName       = storeNameInput.text
+                            settingsManager.cashierName     = cashierInput.text
+                            settingsManager.criticalStockDays = criticalDaysInput.value
+                            settingsManager.saveSettings()
+                        }
+                    }
                 }
             }
         }
     }
 
+    // ── File Dialogs ──────────────────────────────────────────
     FileDialog {
         id: importDialog
-        title: "Seleccionar archivo CSV para importar"
+        title: "Importar Catálogo CSV"
         nameFilters: ["Archivos CSV (*.csv)"]
-        onAccepted: {
-            if(inventorySystem.importFromCSV(selectedFile)) {
-                console.log("Imported")
-            }
-        }
+        onAccepted: inventorySystem.importFromCSV(selectedFile)
     }
 
     FileDialog {
         id: exportInvDialog
-        title: "Guardar Inventario CSV"
+        title: "Exportar Inventario"
         fileMode: FileDialog.SaveFile
         nameFilters: ["Archivos CSV (*.csv)"]
-        onAccepted: {
-            inventorySystem.exportInventoryCSV(selectedFile)
-        }
+        defaultSuffix: "csv"
+        onAccepted: inventorySystem.exportInventoryCSV(selectedFile)
     }
 
     FileDialog {
         id: exportSalesDialog
-        title: "Guardar Historial Ventas CSV"
+        title: "Exportar Historial de Ventas"
         fileMode: FileDialog.SaveFile
         nameFilters: ["Archivos CSV (*.csv)"]
-        onAccepted: {
-            inventorySystem.exportSalesCSV(selectedFile)
-        }
+        defaultSuffix: "csv"
+        onAccepted: inventorySystem.exportSalesCSV(selectedFile)
     }
 }

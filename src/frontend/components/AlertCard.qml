@@ -1,46 +1,54 @@
-import QtQuick
-import QtQuick.Layouts
+// AlertCard.qml — Stock warning card
+import QtQuick 2.15
+import QtQuick.Layouts 1.15
 
 Rectangle {
     id: root
-    property string productName: ""
-    property int daysLeft: 0
-    property string velocity: ""
 
-    Layout.fillWidth: true
-    height: 80
-    radius: 12
-    color: Theme.surface
-    border.color: Theme.danger
+    property string productName: ""
+    property string velocity:    "0"
+    property int    daysLeft:    0
+
+    radius: 10
+    color: "#fff7ed"
+    border.color: "#fb923c"
     border.width: 1
+    height: 72
+    Layout.fillWidth: true
 
     RowLayout {
         anchors.fill: parent
-        anchors.margins: 15
-        spacing: 15
+        anchors.margins: 14
+        spacing: 12
 
-        Image {
-            source: "qrc:/vamp9/Vamp9POS/src/assets/icons/alert-circle.svg"
-            sourceSize: Qt.size(28, 28)
-            Layout.preferredWidth: 28
-            Layout.preferredHeight: 28
+        Rectangle {
+            width: 8
+            height: 8
+            radius: 4
+            color: "#ef4444"
+            Layout.alignment: Qt.AlignVCenter
         }
 
         ColumnLayout {
             Layout.fillWidth: true
-            spacing: 2
+            spacing: 3
+
             Text {
                 text: root.productName
-                color: Theme.textPrimary
-                font.pixelSize: Theme.sizeMD
+                font.pixelSize: 14
                 font.bold: true
-                font.family: Theme.font
+                font.family: "Inter"
+                color: "#92400e"
+                elide: Text.ElideRight
+                Layout.fillWidth: true
             }
             Text {
-                text: "Velocidad: " + root.velocity + " | Restan: " + root.daysLeft + " dias"
-                color: Theme.textSecondary
-                font.pixelSize: Theme.sizeSM
-                font.family: Theme.font
+                text: root.daysLeft >= 9000
+                      ? "Sin ventas — stock: revisión"
+                      : "Stock crítico · " + root.daysLeft + " días restantes"
+                font.pixelSize: 12
+                font.family: "Inter"
+                color: "#b45309"
             }
         }
     }

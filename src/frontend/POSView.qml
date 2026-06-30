@@ -1,287 +1,161 @@
-import QtQuick
-import QtQuick.Layouts
-import QtQuick.Controls
+import QtQuick 2.15
+import QtQuick.Layouts 1.15
+import QtQuick.Controls 2.15
 import "components"
 
 Item {
     id: root
+    property var themeRef: null
+    property var audioRef: null
 
+    // ── Scanner state ─────────────────────────────────────────
     property string barcodeBuffer: ""
-    property int selectedIndex: -1
-    property var audioSystemRef: null
+    property int    selectedRow:   -1
 
-    Item {
-        anchors.fill: parent
-        focus: true 
-        Keys.onPressed: (event) => {
-            if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter) {
-                if (barcodeBuffer.length > 0) {
-                    posController.processScan(barcodeBuffer);
-                    barcodeBuffer = "";
-                }
-                event.accepted = true;
-            } else if (event.text !== "") {
-                barcodeBuffer += event.text;
-                event.accepted = true;
+    // USB Barcode Scanner: keyboard input ends with Enter/Return
+    Keys.onPressed: function(event) {
+        if (!root.visible) return
+        if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter) {
+            if (barcodeBuffer.length > 0) {
+                posController.processScan(barcodeBuffer)
+                barcodeBuffer = ""
             }
+            event.accepted = true
+        } else if (event.text.length > 0) {
+            barcodeBuffer += event.text
+            event.accepted = true
         }
     }
+    focus: true
+    onVisibleChanged: { if (visible) forceActiveFocus() }
 
+    // ── C++ backend signals ───────────────────────────────────
     Connections {
         target: posController
         function onScanResult(success) {
             if (success) {
-                if(root.audioSystemRef) root.audioSystemRef.playBeep();
-                cartList.positionViewAtEnd();
+                if (root.audioRef) root.audioRef.playBeep()
+                cartList.positionViewAtEnd()
             } else {
-                if(root.audioSystemRef) root.audioSystemRef.playError();
+                if (root.audioRef) root.audioRef.playError()
             }
         }
         function onCheckoutCompleted() {
-            if(root.audioSystemRef) root.audioSystemRef.playSuccess();
-            selectedIndex = -1;
-            // update dashboard stats if needed, or rely on dailyStatsChanged
+            if (root.audioRef) root.audioRef.playSuccess()
+            root.selectedRow = -1
         }
         function onCartChanged() {
-            if(posController.cartItems.length === 0) {
-                selectedIndex = -1;
-            }
+            if (posController.cartItems.length === 0) root.selectedRow = -1
         }
     }
 
     PaymentDialog {
         id: paymentDialog
+        themeRef: root.themeRef
     }
 
+    // ── Layout ────────────────────────────────────────────────
     RowLayout {
         anchors.fill: parent
-        anchors.margins: 20
-        spacing: 20
+        anchors.margins: 16
+        spacing: 16
 
-        // Left Panel: Ticket / Cart
-        SolidCard {
+        // ════════════════════════════════════════════════════
+        // LEFT: Cart / Ticket
+        // ════════════════════════════════════════════════════
+        Rectangle {
             Layout.fillWidth: true
             Layout.fillHeight: true
-            Layout.preferredWidth: 60
-            
+            radius: 12
+            color: "#ffffff"
+            border.color: "#e2e8f0"
+            border.width: 1
+            clip: true
+
             ColumnLayout {
                 anchors.fill: parent
-                anchors.margins: 0
                 spacing: 0
 
-                // Search Bar
+                // Search bar
                 Rectangle {
                     Layout.fillWidth: true
-                    height: 60
-                    color: Theme.surface
-                    border.color: Theme.border
+                    height: 52
+                    color: "#f8fafc"
+                    border.color: "#e2e8f0"
                     border.width: 1
-                    radius: 12
-                    
+
                     RowLayout {
                         anchors.fill: parent
-                        anchors.margins: 10
-                        Image { source: "qrc:/vamp9/Vamp9POS/src/assets/icons/barcode.svg"; Layout.preferredWidth: 24; Layout.preferredHeight: 24 }
+                        anchors.leftMargin: 14
+                        anchors.rightMargin: 14
+                        spacing: 10
+
+                        Text { text: "🔍"; font.pixelSize: 16 }
+
                         TextField {
                             id: searchField
                             Layout.fillWidth: true
-                            placeholderText: "Buscar producto por nombre o escanear..."
-                            font.pixelSize: Theme.sizeMD
-                            font.family: Theme.font
-                            background: Item {} // remove border
+                            placeholderText: "Buscar producto por nombre o escanear código de barras..."
+                            font.pixelSize: 14
+                            font.family: "Inter"
+                            color: "#0f172a"
+                            background: Rectangle { color: "transparent" }
                             onTextChanged: {
                                 if (text.length >= 2) {
-                                    searchResults.model = inventorySystem.searchByName(text)
-                                    searchResultsPopup.open()
+                                    searchResultsModel.clear()
+                                    var results = inventorySystem.searchByName(text)
+                                    for (var i = 0; i < results.length; i++) {
+                                        searchResultsModel.append(results[i])
+                                    }
+                                    searchPopup.open()
                                 } else {
-                                    searchResultsPopup.close()
+                                    searchPopup.close()
                                 }
                             }
                         }
                     }
 
+                    // Search dropdown popup
                     Popup {
-                        id: searchResultsPopup
-                        y: 60
+                        id: searchPopup
+                        y: parent.height
+                        x: 0
                         width: parent.width
-                        height: 200
-                        closePolicy: Popup.CloseOnEscape | Popup.CloseOnPressOutside
-                        background: Rectangle { color: Theme.surface; border.color: Theme.border; radius: 8 }
+                        height: Math.min(searchResultsModel.count * 44 + 8, 220)
+                        padding: 4
+                        closePolicy: Popup.CloseOnEscape | Popup.CloseOnPressOutsideParent
+                        background: Rectangle { color: "#ffffff"; border.color: "#e2e8f0"; radius: 8 }
+
+                        ListModel { id: searchResultsModel }
+
                         ListView {
-                            id: searchResults
                             anchors.fill: parent
+                            model: searchResultsModel
                             clip: true
-                            delegate: ItemDelegate {
+                            delegate: Rectangle {
                                 width: ListView.view.width
-                                text: modelData.name + " - $" + modelData.price
-                                font.family: Theme.font
-                                font.pixelSize: Theme.sizeMD
-                                onClicked: {
-                                    posController.processScan(modelData.barcode)
-                                    searchField.text = ""
-                                    searchResultsPopup.close()
+                                height: 44
+                                color: siHover.containsMouse ? "#e0f2fe" : "transparent"
+                                radius: 6
+                                Behavior on color { ColorAnimation { duration: 80 } }
+
+                                RowLayout {
+                                    anchors.fill: parent
+                                    anchors.leftMargin: 10
+                                    anchors.rightMargin: 10
+                                    Text { text: model.name;  font.pixelSize: 14; font.family: "Inter"; color: "#0f172a"; Layout.fillWidth: true; elide: Text.ElideRight }
+                                    Text { text: "$" + model.price; font.pixelSize: 13; font.bold: true; font.family: "Inter"; color: "#0ea5e9" }
                                 }
-                            }
-                        }
-                    }
-                }
 
-                // Header
-                Rectangle {
-                    Layout.fillWidth: true
-                    height: 40
-                    color: Theme.bg
-                    border.color: Theme.border
-                    border.width: 1
-                    
-                    RowLayout {
-                        anchors.fill: parent
-                        anchors.margins: 15
-                        Text { text: "Producto"; color: Theme.textSecondary; font.pixelSize: Theme.sizeMD; font.bold: true; font.family: Theme.font; Layout.fillWidth: true }
-                        Text { text: "Cant."; color: Theme.textSecondary; font.pixelSize: Theme.sizeMD; font.bold: true; font.family: Theme.font; Layout.preferredWidth: 80; horizontalAlignment: Text.AlignHCenter }
-                        Text { text: "Precio"; color: Theme.textSecondary; font.pixelSize: Theme.sizeMD; font.bold: true; font.family: Theme.font; Layout.preferredWidth: 100; horizontalAlignment: Text.AlignRight }
-                    }
-                }
-
-                ListView {
-                    id: cartList
-                    Layout.fillWidth: true
-                    Layout.fillHeight: true
-                    model: posController.cartItems
-                    clip: true
-                    
-                    delegate: Rectangle {
-                        width: ListView.view.width
-                        height: 60
-                        color: root.selectedIndex === index ? "#e0f2fe" : (index % 2 === 0 ? Theme.surface : Theme.bg)
-                        border.color: Theme.border
-                        border.width: root.selectedIndex === index ? 2 : 1
-                        
-                        MouseArea {
-                            anchors.fill: parent
-                            onClicked: root.selectedIndex = index
-                        }
-
-                        RowLayout {
-                            anchors.fill: parent
-                            anchors.margins: 15
-                            
-                            Text { 
-                                text: modelData.name
-                                color: Theme.textPrimary
-                                font.pixelSize: Theme.sizeLG
-                                font.family: Theme.font
-                                Layout.fillWidth: true 
-                            }
-                            
-                            RowLayout {
-                                Layout.preferredWidth: 80
-                                spacing: 5
-                                ActionButton {
-                                    Layout.preferredWidth: 24; Layout.preferredHeight: 24; radius: 12
-                                    text: "-"
-                                    buttonColor: Theme.border
-                                    textColor: Theme.textPrimary
-                                    textSize: Theme.sizeMD
-                                    onClicked: posController.decreaseQty(index)
-                                }
-                                Text { 
-                                    text: modelData.quantity
-                                    color: Theme.textPrimary
-                                    font.pixelSize: Theme.sizeLG
-                                    font.bold: true
-                                    font.family: Theme.font
-                                    Layout.fillWidth: true
-                                    horizontalAlignment: Text.AlignHCenter
-                                }
-                                ActionButton {
-                                    Layout.preferredWidth: 24; Layout.preferredHeight: 24; radius: 12
-                                    text: "+"
-                                    buttonColor: Theme.border
-                                    textColor: Theme.textPrimary
-                                    textSize: Theme.sizeMD
-                                    onClicked: posController.increaseQty(index)
-                                }
-                            }
-
-                            Text { 
-                                text: "$" + (modelData.price * modelData.quantity).toFixed(0)
-                                color: Theme.textPrimary
-                                font.pixelSize: Theme.sizeLG
-                                font.bold: true 
-                                font.family: Theme.font
-                                Layout.preferredWidth: 100
-                                horizontalAlignment: Text.AlignRight
-                            }
-                        }
-                    }
-                }
-            }
-        }
-
-        // Right Panel: Controls
-        ColumnLayout {
-            Layout.fillWidth: true
-            Layout.fillHeight: true
-            Layout.preferredWidth: 40
-            spacing: 20
-
-            // Total Display
-            SolidCard {
-                Layout.fillWidth: true
-                height: 120
-                backgroundColor: Theme.brand
-                
-                ColumnLayout {
-                    anchors.fill: parent
-                    anchors.margins: 20
-                    spacing: 5
-                    
-                    Text { text: "TOTAL A PAGAR"; color: "#e0f2fe"; font.pixelSize: Theme.sizeLG; font.bold: true; font.family: Theme.font }
-                    Text { 
-                        text: "$" + posController.totalAmount.toFixed(0)
-                        color: "#ffffff"
-                        font.pixelSize: Theme.size4XL
-                        font.bold: true 
-                        font.family: Theme.font
-                        Layout.alignment: Qt.AlignRight
-                    }
-                }
-            }
-
-            // Numpad and Actions
-            RowLayout {
-                Layout.fillWidth: true
-                Layout.fillHeight: true
-                spacing: 20
-
-                // Numpad
-                SolidCard {
-                    Layout.fillWidth: true
-                    Layout.fillHeight: true
-                    Layout.preferredWidth: 60
-                    
-                    GridLayout {
-                        anchors.fill: parent
-                        anchors.margins: 15
-                        columns: 3
-                        rowSpacing: 10
-                        columnSpacing: 10
-
-                        Repeater {
-                            model: ["7", "8", "9", "4", "5", "6", "1", "2", "3", "0", "00", "C"]
-                            ActionButton {
-                                Layout.fillWidth: true
-                                Layout.fillHeight: true
-                                text: modelData
-                                buttonColor: Theme.bg
-                                textColor: Theme.textPrimary
-                                textSize: Theme.size2XL
-                                onClicked: {
-                                    if (modelData === "C") {
-                                        root.barcodeBuffer = "";
-                                    } else {
-                                        root.barcodeBuffer += modelData;
+                                MouseArea {
+                                    id: siHover
+                                    anchors.fill: parent
+                                    hoverEnabled: true
+                                    cursorShape: Qt.PointingHandCursor
+                                    onClicked: {
+                                        posController.processScan(model.barcode)
+                                        searchField.text = ""
+                                        searchPopup.close()
                                     }
                                 }
                             }
@@ -289,89 +163,317 @@ Item {
                     }
                 }
 
-                // Actions
-                ColumnLayout {
+                // Column headers
+                Rectangle {
+                    Layout.fillWidth: true
+                    height: 38
+                    color: "#f8fafc"
+
+                    RowLayout {
+                        anchors.fill: parent
+                        anchors.leftMargin: 14
+                        anchors.rightMargin: 14
+                        spacing: 0
+                        Text { text: "Producto";  font.pixelSize: 12; font.bold: true; font.family: "Inter"; color: "#475569"; Layout.fillWidth: true }
+                        Text { text: "Cant.";     font.pixelSize: 12; font.bold: true; font.family: "Inter"; color: "#475569"; Layout.preferredWidth: 90;  horizontalAlignment: Text.AlignHCenter }
+                        Text { text: "Subtotal";  font.pixelSize: 12; font.bold: true; font.family: "Inter"; color: "#475569"; Layout.preferredWidth: 100; horizontalAlignment: Text.AlignRight }
+                    }
+                }
+
+                Rectangle { Layout.fillWidth: true; height: 1; color: "#e2e8f0" }
+
+                // Cart items list
+                ListView {
+                    id: cartList
                     Layout.fillWidth: true
                     Layout.fillHeight: true
-                    Layout.preferredWidth: 40
-                    spacing: 10
+                    clip: true
+                    model: posController ? posController.cartItems : []
+                    spacing: 0
 
-                    ActionButton {
-                        Layout.fillWidth: true
-                        Layout.preferredHeight: 70
-                        text: "Efectivo"
-                        buttonColor: Theme.success
-                        textSize: Theme.sizeXL
-                        onClicked: {
-                            if (posController.totalAmount > 0) {
-                                paymentDialog.paymentMethod = "Efectivo"
-                                paymentDialog.open()
+                    delegate: Rectangle {
+                        width: ListView.view.width
+                        height: 56
+                        color: root.selectedRow === index ? "#e0f2fe" : (index % 2 === 0 ? "#ffffff" : "#f8fafc")
+                        Behavior on color { ColorAnimation { duration: 80 } }
+
+                        Rectangle { anchors.bottom: parent.bottom; width: parent.width; height: 1; color: "#e2e8f0" }
+
+                        // Selected indicator
+                        Rectangle {
+                            visible: root.selectedRow === index
+                            width: 3; height: parent.height
+                            color: "#0ea5e9"
+                            anchors.left: parent.left
+                        }
+
+                        RowLayout {
+                            anchors.fill: parent
+                            anchors.leftMargin: 16
+                            anchors.rightMargin: 14
+                            spacing: 0
+
+                            Text {
+                                text: modelData.name
+                                font.pixelSize: 14; font.family: "Inter"; color: "#0f172a"
+                                Layout.fillWidth: true; elide: Text.ElideRight
+                            }
+
+                            // Qty controls
+                            RowLayout {
+                                Layout.preferredWidth: 90
+                                spacing: 6
+                                Layout.alignment: Qt.AlignHCenter
+
+                                Rectangle {
+                                    width: 26; height: 26; radius: 6
+                                    color: minusHover.containsMouse ? "#e2e8f0" : "#f8fafc"
+                                    border.color: "#e2e8f0"
+                                    Text { anchors.centerIn: parent; text: "−"; font.pixelSize: 16; font.bold: true; color: "#475569" }
+                                    MouseArea { id: minusHover; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: posController.decreaseQty(index) }
+                                }
+
+                                Text {
+                                    text: modelData.quantity
+                                    font.pixelSize: 15; font.bold: true; font.family: "Inter"; color: "#0f172a"
+                                    horizontalAlignment: Text.AlignHCenter
+                                    Layout.preferredWidth: 24
+                                }
+
+                                Rectangle {
+                                    width: 26; height: 26; radius: 6
+                                    color: plusHover.containsMouse ? "#e0f2fe" : "#f8fafc"
+                                    border.color: "#0ea5e9"
+                                    Text { anchors.centerIn: parent; text: "+"; font.pixelSize: 16; font.bold: true; color: "#0ea5e9" }
+                                    MouseArea { id: plusHover; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: posController.increaseQty(index) }
+                                }
+                            }
+
+                            Text {
+                                text: "$" + (modelData.price * modelData.quantity).toFixed(0)
+                                font.pixelSize: 14; font.bold: true; font.family: "Inter"; color: "#0f172a"
+                                Layout.preferredWidth: 100; horizontalAlignment: Text.AlignRight
                             }
                         }
+
+                        MouseArea { anchors.fill: parent; onClicked: root.selectedRow = index }
                     }
 
-                    ActionButton {
-                        Layout.fillWidth: true
-                        Layout.preferredHeight: 70
-                        text: "Tarjeta"
-                        buttonColor: Theme.brandDark
-                        textSize: Theme.sizeXL
-                        onClicked: {
-                            if (posController.totalAmount > 0) {
-                                paymentDialog.paymentMethod = "Tarjeta"
-                                paymentDialog.open()
-                            }
+                    // Empty cart state
+                    Column {
+                        anchors.centerIn: parent
+                        visible: cartList.count === 0
+                        spacing: 8
+
+                        Text { text: "🛒"; font.pixelSize: 40; anchors.horizontalCenter: parent.horizontalCenter }
+                        Text { text: "Carrito vacío"; font.pixelSize: 16; font.family: "Inter"; color: "#94a3b8"; anchors.horizontalCenter: parent.horizontalCenter }
+                        Text { text: "Escanea o busca un producto"; font.pixelSize: 13; font.family: "Inter"; color: "#94a3b8"; anchors.horizontalCenter: parent.horizontalCenter }
+                    }
+                }
+
+                // Footer bar
+                Rectangle {
+                    Layout.fillWidth: true
+                    height: 36
+                    color: "#f8fafc"
+                    border.color: "#e2e8f0"
+                    border.width: 1
+
+                    RowLayout {
+                        anchors.fill: parent
+                        anchors.leftMargin: 14
+                        anchors.rightMargin: 14
+
+                        Text {
+                            text: "⌨  Escáner USB listo" + (root.barcodeBuffer.length > 0 ? "  ·  Buffer: " + root.barcodeBuffer : "")
+                            font.pixelSize: 12; font.family: "Inter"; color: "#94a3b8"
+                            Layout.fillWidth: true
+                        }
+                        Text {
+                            text: cartList.count + " línea(s)"
+                            font.pixelSize: 12; font.family: "Inter"; color: "#475569"
                         }
                     }
+                }
+            }
+        }
 
-                    ActionButton {
-                        Layout.fillWidth: true
-                        Layout.preferredHeight: 60
-                        text: "Anular Ítem"
-                        buttonColor: Theme.danger
-                        textSize: Theme.sizeMD
-                        onClicked: {
-                            if(root.selectedIndex !== -1) {
-                                posController.removeCartItem(root.selectedIndex);
-                            }
-                        }
-                    }
+        // ════════════════════════════════════════════════════
+        // RIGHT: Total + Numpad + Actions
+        // ════════════════════════════════════════════════════
+        ColumnLayout {
+            Layout.fillHeight: true
+            width: 320
+            spacing: 12
 
-                    ActionButton {
-                        Layout.fillWidth: true
-                        Layout.preferredHeight: 60
-                        text: "Vaciar Caja"
-                        buttonColor: Theme.warning
-                        textSize: Theme.sizeMD
-                        onClicked: posController.clearCart()
+            // Total display
+            Rectangle {
+                Layout.fillWidth: true
+                height: 110
+                radius: 14
+                gradient: Gradient {
+                    GradientStop { position: 0.0; color: "#0369a1" }
+                    GradientStop { position: 1.0; color: "#0ea5e9" }
+                }
+
+                ColumnLayout {
+                    anchors.fill: parent
+                    anchors.margins: 18
+                    spacing: 4
+                    Text { text: "TOTAL A PAGAR"; font.pixelSize: 11; font.family: "Inter"; color: "#7dd3fc"; letterSpacing: 2 }
+                    Text {
+                        text: posController ? ("$" + posController.totalAmount.toLocaleString(Qt.locale("es-CL"), "f", 0)) : "$0"
+                        font.pixelSize: 36; font.bold: true; font.family: "Inter"; color: "#ffffff"
+                        Layout.alignment: Qt.AlignRight
+                        elide: Text.ElideRight; Layout.fillWidth: true; horizontalAlignment: Text.AlignRight
                     }
-                    
-                    Item { Layout.fillHeight: true }
                 }
             }
 
-            // Input buffer display
-            SolidCard {
+            // Numpad
+            Rectangle {
                 Layout.fillWidth: true
-                height: 50
-                backgroundColor: Theme.bg
-                RowLayout {
+                Layout.fillHeight: true
+                radius: 12
+                color: "#ffffff"
+                border.color: "#e2e8f0"
+                border.width: 1
+
+                GridLayout {
                     anchors.fill: parent
-                    anchors.margins: 10
-                    Text { text: "Input Scanner/Numpad:"; color: Theme.textSecondary; font.pixelSize: Theme.sizeSM; font.family: Theme.font }
-                    Text { text: root.barcodeBuffer; color: Theme.textPrimary; font.pixelSize: Theme.sizeLG; font.bold: true; font.family: Theme.font; Layout.fillWidth: true }
-                    ActionButton {
-                        text: "Enter"
-                        Layout.preferredWidth: 80
-                        Layout.preferredHeight: 30
-                        textSize: Theme.sizeSM
-                        onClicked: {
-                            if (root.barcodeBuffer.length > 0) {
-                                posController.processScan(root.barcodeBuffer);
-                                root.barcodeBuffer = "";
+                    anchors.margins: 12
+                    columns: 3
+                    rowSpacing: 8
+                    columnSpacing: 8
+
+                    Repeater {
+                        model: ["7","8","9","4","5","6","1","2","3","0","00","⌫"]
+                        delegate: Rectangle {
+                            Layout.fillWidth: true
+                            Layout.fillHeight: true
+                            radius: 8
+                            color: numKeyArea.pressed ? "#e0f2fe" : (numKeyArea.containsMouse ? "#f8fafc" : "#ffffff")
+                            border.color: "#e2e8f0"
+                            border.width: 1
+                            Behavior on color { ColorAnimation { duration: 60 } }
+
+                            Text {
+                                anchors.centerIn: parent
+                                text: modelData
+                                font.pixelSize: 22; font.bold: true; font.family: "Inter"; color: "#0f172a"
+                            }
+
+                            MouseArea {
+                                id: numKeyArea
+                                anchors.fill: parent
+                                hoverEnabled: true
+                                cursorShape: Qt.PointingHandCursor
+                                onClicked: {
+                                    if (modelData === "⌫") {
+                                        if (root.barcodeBuffer.length > 0)
+                                            root.barcodeBuffer = root.barcodeBuffer.slice(0, -1)
+                                    } else {
+                                        root.barcodeBuffer += modelData
+                                    }
+                                }
                             }
                         }
                     }
+                }
+            }
+
+            // Enter/scan button
+            Rectangle {
+                Layout.fillWidth: true
+                height: 44
+                radius: 10
+                color: enterArea.pressed ? "#0284c7" : (enterArea.containsMouse ? "#0ea5e9" : "#38bdf8")
+                Behavior on color { ColorAnimation { duration: 80 } }
+
+                RowLayout {
+                    anchors.centerIn: parent
+                    spacing: 8
+                    Text { text: "⏎"; font.pixelSize: 16; color: "#fff" }
+                    Text { text: "Procesar Código"; font.pixelSize: 14; font.bold: true; font.family: "Inter"; color: "#fff" }
+                }
+
+                MouseArea {
+                    id: enterArea
+                    anchors.fill: parent
+                    hoverEnabled: true
+                    cursorShape: Qt.PointingHandCursor
+                    onClicked: {
+                        if (root.barcodeBuffer.length > 0) {
+                            posController.processScan(root.barcodeBuffer)
+                            root.barcodeBuffer = ""
+                        }
+                    }
+                }
+            }
+
+            // Payment buttons
+            RowLayout {
+                Layout.fillWidth: true
+                spacing: 8
+
+                ActionButton {
+                    text: "💵  Efectivo"
+                    btnColor: "#16a34a"
+                    textSize: 15
+                    Layout.fillWidth: true
+                    height: 56
+                    btnRadius: 10
+                    onClicked: {
+                        if (posController && posController.totalAmount > 0) {
+                            paymentDialog.method = "Efectivo"
+                            paymentDialog.open()
+                        }
+                    }
+                }
+
+                ActionButton {
+                    text: "💳  Tarjeta"
+                    btnColor: "#0284c7"
+                    textSize: 15
+                    Layout.fillWidth: true
+                    height: 56
+                    btnRadius: 10
+                    onClicked: {
+                        if (posController && posController.totalAmount > 0) {
+                            paymentDialog.method = "Tarjeta"
+                            paymentDialog.open()
+                        }
+                    }
+                }
+            }
+
+            // Utility buttons
+            RowLayout {
+                Layout.fillWidth: true
+                spacing: 8
+
+                ActionButton {
+                    text: "Anular ítem"
+                    btnColor: "#dc2626"
+                    textSize: 13
+                    Layout.fillWidth: true
+                    height: 40
+                    btnRadius: 8
+                    enabled: root.selectedRow >= 0
+                    onClicked: {
+                        posController.removeCartItem(root.selectedRow)
+                        root.selectedRow = -1
+                    }
+                }
+
+                ActionButton {
+                    text: "Vaciar caja"
+                    btnColor: "#d97706"
+                    textSize: 13
+                    Layout.fillWidth: true
+                    height: 40
+                    btnRadius: 8
+                    onClicked: posController.clearCart()
                 }
             }
         }

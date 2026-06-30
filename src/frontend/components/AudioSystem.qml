@@ -1,23 +1,18 @@
-import QtQuick
+// AudioSystem.qml — Bridge to C++ audio backend
+import QtQuick 2.15
 
 Item {
     id: root
 
     function playBeep() {
-        if (typeof posController !== 'undefined') {
-            posController.playBeep();
-        }
+        posController.playBeep()
     }
 
     function playError() {
-        if (typeof posController !== 'undefined') {
-            posController.playError();
-        }
+        posController.playError()
     }
 
     function playSuccess() {
-        if (typeof posController !== 'undefined') {
-            posController.playSuccess();
-        }
+        posController.playSuccess()
     }
 }

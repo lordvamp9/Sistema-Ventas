@@ -1,112 +1,177 @@
-import QtQuick
-import QtQuick.Layouts
-import QtQuick.Controls
-import "components"
+import QtQuick 2.15
+import QtQuick.Layouts 1.15
+import QtQuick.Controls 2.15
 
 Rectangle {
     id: root
-    color: Theme.brand // vamp9 light blue brand color
-    
-    signal currentViewChanged(var viewIndex)
+
+    property var themeRef: null
     property int activeIndex: 0
+
+    signal navSelected(int index)
+
+    color: themeRef ? themeRef.sidebarBg : "#075985"
 
     ColumnLayout {
         anchors.fill: parent
-        anchors.margins: 20
-        spacing: 15
+        spacing: 0
+
+        // ── Logo / Brand ─────────────────────────────────────
+        Rectangle {
+            Layout.fillWidth: true
+            height: 72
+            color: "transparent"
+
+            ColumnLayout {
+                anchors.centerIn: parent
+                spacing: 2
+
+                Text {
+                    text: "vamp9"
+                    font.pixelSize: 26
+                    font.bold: true
+                    font.family: "Inter"
+                    color: "#ffffff"
+                    Layout.alignment: Qt.AlignHCenter
+                }
+                Text {
+                    text: "POINT OF SALE"
+                    font.pixelSize: 10
+                    font.family: "Inter"
+                    color: "#7dd3fc"
+                    letterSpacing: 2
+                    Layout.alignment: Qt.AlignHCenter
+                }
+            }
+        }
+
+        // Divider
+        Rectangle {
+            Layout.fillWidth: true
+            height: 1
+            color: "rgba(255,255,255,0.15)"
+            Layout.leftMargin: 20
+            Layout.rightMargin: 20
+        }
+
+        Item { height: 12 }
+
+        // ── Nav items ────────────────────────────────────────
+        NavItem {
+            label: "Dashboard"
+            iconChar: "⊞"
+            index: 0
+            active: root.activeIndex === 0
+            onSelected: { root.activeIndex = 0; root.navSelected(0) }
+        }
+        NavItem {
+            label: "Caja (POS)"
+            iconChar: "⊟"
+            index: 1
+            active: root.activeIndex === 1
+            onSelected: { root.activeIndex = 1; root.navSelected(1) }
+        }
+        NavItem {
+            label: "Inventario"
+            iconChar: "☰"
+            index: 2
+            active: root.activeIndex === 2
+            onSelected: { root.activeIndex = 2; root.navSelected(2) }
+        }
+        NavItem {
+            label: "Configuración"
+            iconChar: "⚙"
+            index: 3
+            active: root.activeIndex === 3
+            onSelected: { root.activeIndex = 3; root.navSelected(3) }
+        }
+
+        Item { Layout.fillHeight: true }
+
+        // ── Footer / version ─────────────────────────────────
+        Rectangle {
+            Layout.fillWidth: true
+            height: 1
+            color: "rgba(255,255,255,0.1)"
+        }
 
         Text {
-            text: "vamp9 POS"
-            color: "#ffffff"
-            font.pixelSize: 28
-            font.bold: true
-            font.family: Theme.font
+            text: "v2.0  ·  vamp9 POS"
+            font.pixelSize: 11
+            font.family: "Inter"
+            color: "#7dd3fc"
             Layout.alignment: Qt.AlignHCenter
-            Layout.bottomMargin: 30
+            topPadding: 12
+            bottomPadding: 12
         }
-
-        SidebarButton {
-            text: "Dashboard"
-            iconSource: "qrc:/vamp9/Vamp9POS/src/assets/icons/home.svg" 
-            isActive: root.activeIndex === 0
-            onClicked: { root.activeIndex = 0; root.currentViewChanged(0) }
-        }
-
-        SidebarButton {
-            text: "Caja (POS)"
-            iconSource: "qrc:/vamp9/Vamp9POS/src/assets/icons/barcode.svg"
-            isActive: root.activeIndex === 1
-            onClicked: { root.activeIndex = 1; root.currentViewChanged(1) }
-        }
-
-        SidebarButton {
-            text: "Administración"
-            iconSource: "qrc:/vamp9/Vamp9POS/src/assets/icons/package.svg"
-            isActive: root.activeIndex === 2
-            onClicked: { root.activeIndex = 2; root.currentViewChanged(2) }
-        }
-
-        SidebarButton {
-            text: "Configuración"
-            iconSource: "qrc:/vamp9/Vamp9POS/src/assets/icons/settings.svg"
-            isActive: root.activeIndex === 3
-            onClicked: { root.activeIndex = 3; root.currentViewChanged(3) }
-        }
-
-        Item { Layout.fillHeight: true } 
     }
 
-    component SidebarButton: Rectangle {
-        id: btn
-        property string text: ""
-        property string iconSource: ""
-        property bool isActive: false
-        signal clicked()
+    // ── NavItem component ────────────────────────────────────
+    component NavItem: Item {
+        id: navItem
+        property string label:    ""
+        property string iconChar: ""
+        property int    index:    0
+        property bool   active:   false
+
+        signal selected()
 
         Layout.fillWidth: true
-        height: 50
-        radius: 8
-        color: isActive ? Qt.rgba(255, 255, 255, 0.25) : (mouseArea.containsMouse ? Qt.rgba(255, 255, 255, 0.15) : "transparent")
-        
-        Behavior on color { ColorAnimation { duration: 150 } }
+        height: 48
 
         Rectangle {
-            visible: btn.isActive
-            width: 4; height: parent.height * 0.6
-            radius: 2
-            color: "#ffffff"
-            anchors.left: parent.left
-            anchors.leftMargin: 2
-            anchors.verticalCenter: parent.verticalCenter
-        }
-
-        RowLayout {
             anchors.fill: parent
-            anchors.leftMargin: 15
-            spacing: 15
+            anchors.leftMargin: 12
+            anchors.rightMargin: 12
+            radius: 8
+            color: navItem.active
+                   ? "rgba(255,255,255,0.18)"
+                   : (navHover.containsMouse ? "rgba(255,255,255,0.09)" : "transparent")
+            Behavior on color { ColorAnimation { duration: 120 } }
 
-            Image {
-                source: btn.iconSource
-                sourceSize: Qt.size(24, 24)
-                Layout.preferredWidth: 24
-                Layout.preferredHeight: 24
+            // Active indicator bar
+            Rectangle {
+                visible: navItem.active
+                width: 3
+                height: 24
+                radius: 2
+                color: "#38bdf8"
+                anchors.left: parent.left
+                anchors.leftMargin: 4
+                anchors.verticalCenter: parent.verticalCenter
             }
 
-            Text {
-                text: btn.text
-                color: "#ffffff"
-                font.pixelSize: Theme.sizeLG
-                font.bold: true
-                font.family: Theme.font
+            RowLayout {
+                anchors.fill: parent
+                anchors.leftMargin: 14
+                anchors.rightMargin: 10
+                spacing: 12
+
+                Text {
+                    text: navItem.iconChar
+                    font.pixelSize: 18
+                    color: navItem.active ? "#ffffff" : "#bae6fd"
+                    Layout.preferredWidth: 20
+                    horizontalAlignment: Text.AlignHCenter
+                }
+
+                Text {
+                    text: navItem.label
+                    font.pixelSize: 14
+                    font.bold: navItem.active
+                    font.family: "Inter"
+                    color: navItem.active ? "#ffffff" : "#bae6fd"
+                    Layout.fillWidth: true
+                }
             }
         }
 
         MouseArea {
-            id: mouseArea
+            id: navHover
             anchors.fill: parent
             hoverEnabled: true
             cursorShape: Qt.PointingHandCursor
-            onClicked: btn.clicked()
+            onClicked: navItem.selected()
         }
     }
 }

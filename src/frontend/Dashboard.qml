@@ -1,193 +1,308 @@
-import QtQuick
-import QtQuick.Layouts
-import QtQuick.Controls
+import QtQuick 2.15
+import QtQuick.Layouts 1.15
+import QtQuick.Controls 2.15
 import "components"
 
 Item {
     id: root
+    property var themeRef: null
 
     ColumnLayout {
         anchors.fill: parent
-        anchors.margins: 25
-        spacing: 25
+        anchors.margins: 24
+        spacing: 0
 
-        // Header Title
-        Text {
-            text: "Dashboard | " + settingsManager.storeName
-            font.pixelSize: Theme.size3XL
-            font.bold: true
-            font.family: Theme.font
-            color: Theme.textPrimary
-        }
-
-        // KPIs Row
+        // ── Header ───────────────────────────────────────────
         RowLayout {
             Layout.fillWidth: true
-            Layout.preferredHeight: 120
-            spacing: 20
+            Layout.bottomMargin: 20
 
-            SolidCard {
+            ColumnLayout {
                 Layout.fillWidth: true
-                Layout.fillHeight: true
-                ColumnLayout {
-                    anchors.centerIn: parent
-                    spacing: 5
-                    Text { text: "Ventas Hoy"; font.pixelSize: Theme.sizeMD; color: Theme.textSecondary; font.family: Theme.font }
-                    Text { text: posController.dailyTransactions.toString(); font.pixelSize: Theme.size3XL; font.bold: true; color: Theme.textPrimary; font.family: Theme.font }
+                spacing: 2
+
+                Text {
+                    text: "Dashboard"
+                    font.pixelSize: 30
+                    font.bold: true
+                    font.family: "Inter"
+                    color: themeRef ? themeRef.textPrimary : "#0f172a"
+                }
+                Text {
+                    text: settingsManager ? settingsManager.storeName : "vamp9 POS"
+                    font.pixelSize: 15
+                    font.family: "Inter"
+                    color: themeRef ? themeRef.textSecondary : "#475569"
                 }
             }
 
-            SolidCard {
-                Layout.fillWidth: true
-                Layout.fillHeight: true
-                ColumnLayout {
-                    anchors.centerIn: parent
-                    spacing: 5
-                    Text { text: "Monto Total Hoy"; font.pixelSize: Theme.sizeMD; color: Theme.textSecondary; font.family: Theme.font }
-                    Text { text: "$" + posController.dailyTotal.toFixed(0); font.pixelSize: Theme.size3XL; font.bold: true; color: Theme.success; font.family: Theme.font }
-                }
+            Text {
+                id: clockText
+                font.pixelSize: 17
+                font.family: "Inter"
+                color: themeRef ? themeRef.textSecondary : "#475569"
+                horizontalAlignment: Text.AlignRight
             }
 
-            SolidCard {
-                Layout.fillWidth: true
-                Layout.fillHeight: true
-                ColumnLayout {
-                    anchors.centerIn: parent
-                    spacing: 5
-                    Text { text: "Productos Vendidos"; font.pixelSize: Theme.sizeMD; color: Theme.textSecondary; font.family: Theme.font }
-                    Text { text: posController.dailyItemsCount.toString(); font.pixelSize: Theme.size3XL; font.bold: true; color: Theme.brand; font.family: Theme.font }
-                }
-            }
-
-            SolidCard {
-                Layout.fillWidth: true
-                Layout.fillHeight: true
-                ColumnLayout {
-                    anchors.centerIn: parent
-                    spacing: 5
-                    Text { text: "Alertas de Stock"; font.pixelSize: Theme.sizeMD; color: Theme.textSecondary; font.family: Theme.font }
-                    Text { text: inventorySystem.criticalProductsCount.toString(); font.pixelSize: Theme.size3XL; font.bold: true; color: inventorySystem.criticalProductsCount > 0 ? Theme.danger : Theme.success; font.family: Theme.font }
-                }
+            Timer {
+                interval: 1000; running: true; repeat: true
+                onTriggered: clockText.text = Qt.formatDateTime(new Date(), "ddd d MMM  HH:mm:ss")
+                Component.onCompleted: clockText.text = Qt.formatDateTime(new Date(), "ddd d MMM  HH:mm:ss")
             }
         }
 
-        // Main Content Row
+        // ── KPI Cards Row ────────────────────────────────────
+        RowLayout {
+            Layout.fillWidth: true
+            height: 100
+            spacing: 16
+
+            KPICard {
+                label: "Ventas Hoy"
+                value: posController ? posController.dailyTransactions.toString() : "0"
+                accentColor: "#0ea5e9"
+                Layout.fillWidth: true
+                Layout.fillHeight: true
+            }
+            KPICard {
+                label: "Ingresos Hoy"
+                value: posController ? ("$" + posController.dailyTotal.toFixed(0)) : "$0"
+                accentColor: "#16a34a"
+                Layout.fillWidth: true
+                Layout.fillHeight: true
+            }
+            KPICard {
+                label: "Items Vendidos"
+                value: posController ? posController.dailyItemsCount.toString() : "0"
+                accentColor: "#38bdf8"
+                Layout.fillWidth: true
+                Layout.fillHeight: true
+            }
+            KPICard {
+                label: "Alertas de Stock"
+                value: inventorySystem ? inventorySystem.criticalProductsCount.toString() : "0"
+                accentColor: (inventorySystem && inventorySystem.criticalProductsCount > 0) ? "#dc2626" : "#16a34a"
+                Layout.fillWidth: true
+                Layout.fillHeight: true
+            }
+        }
+
+        Item { height: 16 }
+
+        // ── Main area: Recent Sales + Critical Stock ─────────
         RowLayout {
             Layout.fillWidth: true
             Layout.fillHeight: true
-            spacing: 20
+            spacing: 16
 
-            // Recent Sales Table
-            SolidCard {
+            // Recent Sales
+            Rectangle {
                 Layout.fillWidth: true
                 Layout.fillHeight: true
-                Layout.preferredWidth: 65
-                
+                radius: 12
+                color: "#ffffff"
+                border.color: "#e2e8f0"
+                border.width: 1
+
                 ColumnLayout {
                     anchors.fill: parent
                     anchors.margins: 20
-                    spacing: 15
+                    spacing: 12
 
                     Text {
-                        text: "Ventas Recientes"
-                        font.pixelSize: Theme.sizeXL
+                        text: "Últimas Ventas"
+                        font.pixelSize: 20
                         font.bold: true
-                        font.family: Theme.font
-                        color: Theme.textPrimary
+                        font.family: "Inter"
+                        color: "#0f172a"
                     }
-                    
-                    Rectangle { Layout.fillWidth: true; height: 1; color: Theme.border }
+
+                    // Table header
+                    Rectangle {
+                        Layout.fillWidth: true
+                        height: 36
+                        radius: 6
+                        color: "#f8fafc"
+
+                        RowLayout {
+                            anchors.fill: parent
+                            anchors.leftMargin: 12
+                            anchors.rightMargin: 12
+                            spacing: 0
+                            Text { text: "Producto"; font.pixelSize: 12; font.bold: true; font.family: "Inter"; color: "#475569"; Layout.fillWidth: true }
+                            Text { text: "Monto";    font.pixelSize: 12; font.bold: true; font.family: "Inter"; color: "#475569"; Layout.preferredWidth: 90;  horizontalAlignment: Text.AlignRight }
+                            Text { text: "Hora";     font.pixelSize: 12; font.bold: true; font.family: "Inter"; color: "#475569"; Layout.preferredWidth: 70;  horizontalAlignment: Text.AlignRight }
+                        }
+                    }
 
                     ListView {
-                        id: salesList
+                        id: recentSalesList
                         Layout.fillWidth: true
                         Layout.fillHeight: true
                         clip: true
-                        model: posController.recentSales
-                        spacing: 10
-                        
+                        model: posController ? posController.recentSales : []
+                        spacing: 2
+
                         delegate: Rectangle {
                             width: ListView.view.width
-                            height: 50
-                            color: Theme.bg
-                            radius: 8
-                            border.color: Theme.border
+                            height: 44
+                            radius: 6
+                            color: index % 2 === 0 ? "#ffffff" : "#f8fafc"
 
                             RowLayout {
                                 anchors.fill: parent
-                                anchors.margins: 15
-                                Text { text: modelData.name; font.pixelSize: Theme.sizeMD; font.family: Theme.font; Layout.fillWidth: true; color: Theme.textPrimary }
-                                Text { text: "$" + modelData.price.toFixed(0); font.pixelSize: Theme.sizeMD; font.bold: true; font.family: Theme.font; Layout.preferredWidth: 100; horizontalAlignment: Text.AlignRight; color: Theme.textPrimary }
-                                Text { text: modelData.time; font.pixelSize: Theme.sizeMD; font.family: Theme.font; color: Theme.textSecondary; Layout.preferredWidth: 80; horizontalAlignment: Text.AlignRight }
+                                anchors.leftMargin: 12
+                                anchors.rightMargin: 12
+                                spacing: 0
+                                Text { text: modelData.name;  font.pixelSize: 14; font.family: "Inter"; color: "#0f172a"; Layout.fillWidth: true; elide: Text.ElideRight }
+                                Text { text: "$" + modelData.price.toFixed(0); font.pixelSize: 14; font.bold: true; font.family: "Inter"; color: "#16a34a"; Layout.preferredWidth: 90; horizontalAlignment: Text.AlignRight }
+                                Text { text: modelData.time;  font.pixelSize: 13; font.family: "Inter"; color: "#94a3b8"; Layout.preferredWidth: 70; horizontalAlignment: Text.AlignRight }
                             }
+                        }
+
+                        Text {
+                            anchors.centerIn: parent
+                            visible: recentSalesList.count === 0
+                            text: "Sin ventas hoy"
+                            font.pixelSize: 14; font.family: "Inter"; color: "#94a3b8"
                         }
                     }
                 }
             }
 
-            // Critical Stock
-            SolidCard {
-                Layout.fillWidth: true
+            // Critical Stock panel
+            Rectangle {
                 Layout.fillHeight: true
-                Layout.preferredWidth: 35
-                
+                width: 280
+                radius: 12
+                color: "#ffffff"
+                border.color: "#e2e8f0"
+                border.width: 1
+
                 ColumnLayout {
                     anchors.fill: parent
                     anchors.margins: 20
-                    spacing: 15
+                    spacing: 12
 
-                    Text {
-                        text: "Stock Crítico"
-                        font.pixelSize: Theme.sizeXL
-                        font.bold: true
-                        font.family: Theme.font
-                        color: Theme.danger
+                    RowLayout {
+                        Layout.fillWidth: true
+                        Text {
+                            text: "Stock Crítico"
+                            font.pixelSize: 18
+                            font.bold: true
+                            font.family: "Inter"
+                            color: "#dc2626"
+                            Layout.fillWidth: true
+                        }
+                        Rectangle {
+                            width: 28; height: 20; radius: 10
+                            color: "#fee2e2"
+                            Text {
+                                anchors.centerIn: parent
+                                text: criticalListView.count.toString()
+                                font.pixelSize: 11; font.bold: true; font.family: "Inter"; color: "#dc2626"
+                            }
+                        }
                     }
-                    
-                    Rectangle { Layout.fillWidth: true; height: 1; color: Theme.border }
 
                     ListModel { id: criticalModel }
 
                     Connections {
                         target: inventorySystem
                         function onCriticalStockAlert(productName, currentStock, dailyVelocity, estimatedDaysLeft) {
-                            // Check if exists to avoid duplicates when running prediction multiple times
-                            var found = false;
-                            for(var i=0; i<criticalModel.count; ++i) {
-                                if (criticalModel.get(i).name === productName) {
-                                    found = true;
-                                    break;
-                                }
+                            for (var i = 0; i < criticalModel.count; i++) {
+                                if (criticalModel.get(i).pName === productName) return
                             }
-                            if(!found) {
-                                criticalModel.append({
-                                    "name": productName,
-                                    "velocity": dailyVelocity.toFixed(1),
-                                    "daysLeft": estimatedDaysLeft
-                                });
-                            }
+                            criticalModel.append({ pName: productName, pDays: estimatedDaysLeft, pStock: currentStock })
                         }
                     }
 
                     Component.onCompleted: {
-                        criticalModel.clear();
-                        inventorySystem.runStockPrediction(30, settingsManager.criticalStockDays);
+                        criticalModel.clear()
+                        if (inventorySystem) {
+                            inventorySystem.runStockPrediction(30, settingsManager ? settingsManager.criticalStockDays : 3)
+                        }
                     }
 
                     ListView {
+                        id: criticalListView
                         Layout.fillWidth: true
                         Layout.fillHeight: true
                         clip: true
                         model: criticalModel
-                        spacing: 10
+                        spacing: 8
 
-                        delegate: AlertCard {
-                            productName: model.name
-                            velocity: model.velocity
-                            daysLeft: model.daysLeft
+                        delegate: Rectangle {
+                            width: ListView.view.width
+                            height: 64
+                            radius: 8
+                            color: "#fff7ed"
+                            border.color: "#fb923c"
+                            border.width: 1
+
+                            RowLayout {
+                                anchors.fill: parent
+                                anchors.margins: 12
+                                spacing: 10
+
+                                Rectangle { width: 6; height: 6; radius: 3; color: "#ef4444"; Layout.alignment: Qt.AlignVCenter }
+
+                                ColumnLayout {
+                                    Layout.fillWidth: true
+                                    spacing: 2
+                                    Text { text: model.pName; font.pixelSize: 13; font.bold: true; font.family: "Inter"; color: "#92400e"; elide: Text.ElideRight; Layout.fillWidth: true }
+                                    Text { text: model.pDays >= 9000 ? "Sin rotación" : (model.pDays + " días · stock: " + model.pStock); font.pixelSize: 11; font.family: "Inter"; color: "#b45309" }
+                                }
+                            }
+                        }
+
+                        Text {
+                            anchors.centerIn: parent
+                            visible: criticalListView.count === 0
+                            text: "✓ Todo en orden"
+                            font.pixelSize: 14; font.family: "Inter"; color: "#16a34a"
                         }
                     }
                 }
+            }
+        }
+    }
+
+    // ── KPI Card inline component ─────────────────────────────
+    component KPICard: Rectangle {
+        property string label:       ""
+        property string value:       "0"
+        property color  accentColor: "#0ea5e9"
+
+        radius: 12
+        color: "#ffffff"
+        border.color: "#e2e8f0"
+        border.width: 1
+
+        // Top accent stripe
+        Rectangle {
+            anchors.top: parent.top
+            anchors.left: parent.left
+            anchors.right: parent.right
+            height: 4
+            radius: 2
+            color: accentColor
+        }
+
+        ColumnLayout {
+            anchors.fill: parent
+            anchors.margins: 16
+            anchors.topMargin: 14
+            spacing: 4
+
+            Text {
+                text: label
+                font.pixelSize: 12; font.family: "Inter"; color: "#475569"
+            }
+            Text {
+                text: value
+                font.pixelSize: 28; font.bold: true; font.family: "Inter"
+                color: accentColor
             }
         }
     }

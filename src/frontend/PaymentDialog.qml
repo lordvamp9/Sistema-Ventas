@@ -1,172 +1,192 @@
-import QtQuick
-import QtQuick.Layouts
-import QtQuick.Controls
-import "components"
+import QtQuick 2.15
+import QtQuick.Layouts 1.15
+import QtQuick.Controls 2.15
 
 Popup {
     id: root
-    width: 500
-    height: 400
+    property var themeRef: null
+    property string method: "Efectivo"
+
+    anchors.centerIn: Overlay.overlay
+    width: 480
+    height: method === "Efectivo" ? 440 : 320
     modal: true
     focus: true
-    anchors.centerIn: parent
     closePolicy: Popup.NoAutoClose
 
-    property string paymentMethod: "Efectivo" // "Efectivo" or "Tarjeta"
-    
-    // Reset inputs when opened
+    Behavior on height { NumberAnimation { duration: 200; easing.type: Easing.OutCubic } }
+
     onOpened: {
-        deliveredInput.text = ""
-        deliveredInput.forceActiveFocus()
+        cashInput.text = ""
+        if (method === "Efectivo") cashInput.forceActiveFocus()
     }
 
     background: Rectangle {
-        color: Theme.surface
-        radius: 12
-        border.color: Theme.border
+        color: "#ffffff"
+        radius: 16
+        border.color: "#e2e8f0"
         border.width: 1
     }
 
     ColumnLayout {
         anchors.fill: parent
-        anchors.margins: 25
-        spacing: 20
+        anchors.margins: 28
+        spacing: 18
 
-        Text {
-            text: "Confirmar Pago - " + root.paymentMethod
-            font.pixelSize: Theme.sizeXL
-            font.bold: true
-            font.family: Theme.font
-            color: Theme.textPrimary
-            Layout.alignment: Qt.AlignHCenter
-        }
-
-        Rectangle {
-            Layout.fillWidth: true
-            height: 1
-            color: Theme.border
-        }
-
-        // Total
+        // Header
         RowLayout {
             Layout.fillWidth: true
+
             Text {
-                text: "Total a Pagar:"
-                font.pixelSize: Theme.sizeLG
-                font.family: Theme.font
-                color: Theme.textSecondary
+                text: method === "Efectivo" ? "💵  Pago en Efectivo" : "💳  Pago con Tarjeta"
+                font.pixelSize: 22; font.bold: true; font.family: "Inter"; color: "#0f172a"
                 Layout.fillWidth: true
             }
-            Text {
-                text: "$" + posController.totalAmount.toFixed(0)
-                font.pixelSize: Theme.size3XL
-                font.bold: true
-                font.family: Theme.font
-                color: Theme.brand
+
+            Rectangle {
+                width: 32; height: 32; radius: 16
+                color: xHover.containsMouse ? "#fee2e2" : "#f8fafc"
+                Text { anchors.centerIn: parent; text: "✕"; font.pixelSize: 14; font.bold: true; color: "#dc2626" }
+                MouseArea { id: xHover; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: root.close() }
             }
         }
 
-        // Efectivo Specific
-        ColumnLayout {
+        Rectangle { Layout.fillWidth: true; height: 1; color: "#e2e8f0" }
+
+        // Total banner
+        Rectangle {
             Layout.fillWidth: true
-            visible: root.paymentMethod === "Efectivo"
-            spacing: 15
+            height: 72
+            radius: 12
+            color: "#e0f2fe"
+            border.color: "#38bdf8"
+            border.width: 1
 
             RowLayout {
-                Layout.fillWidth: true
+                anchors.fill: parent
+                anchors.leftMargin: 20
+                anchors.rightMargin: 20
+
+                Text { text: "Total a Pagar"; font.pixelSize: 15; font.family: "Inter"; color: "#0284c7"; Layout.fillWidth: true }
                 Text {
-                    text: "Monto Entregado:"
-                    font.pixelSize: Theme.sizeLG
-                    font.family: Theme.font
-                    color: Theme.textSecondary
-                    Layout.fillWidth: true
+                    text: posController ? ("$" + posController.totalAmount.toFixed(0)) : "$0"
+                    font.pixelSize: 30; font.bold: true; font.family: "Inter"; color: "#0284c7"
                 }
-                TextField {
-                    id: deliveredInput
-                    font.pixelSize: Theme.size2XL
-                    font.bold: true
-                    font.family: Theme.font
-                    color: Theme.textPrimary
-                    horizontalAlignment: TextInput.AlignRight
-                    Layout.preferredWidth: 200
-                    validator: RegularExpressionValidator { regularExpression: /^[0-9]+$/ }
-                    background: Rectangle {
-                        color: Theme.bg
-                        border.color: Theme.border
-                        radius: 8
+            }
+        }
+
+        // Cash payment fields
+        ColumnLayout {
+            Layout.fillWidth: true
+            spacing: 12
+            visible: method === "Efectivo"
+
+            Text { text: "Monto entregado por el cliente:"; font.pixelSize: 14; font.family: "Inter"; color: "#475569" }
+
+            TextField {
+                id: cashInput
+                Layout.fillWidth: true
+                height: 52
+                font.pixelSize: 22; font.bold: true; font.family: "Inter"
+                color: "#0f172a"
+                horizontalAlignment: TextInput.AlignRight
+                inputMethodHints: Qt.ImhDigitsOnly
+                validator: RegularExpressionValidator { regularExpression: /^\d*$/ }
+                placeholderText: "0"
+                background: Rectangle {
+                    radius: 10
+                    color: "#f8fafc"
+                    border.color: cashInput.activeFocus ? "#0ea5e9" : "#e2e8f0"
+                    border.width: cashInput.activeFocus ? 2 : 1
+                }
+            }
+
+            // Change amount
+            Rectangle {
+                Layout.fillWidth: true
+                height: 54
+                radius: 10
+                visible: cashInput.text.length > 0
+                property double changeAmt: parseFloat(cashInput.text || "0") - (posController ? posController.totalAmount : 0)
+                color: changeAmt >= 0 ? "#dcfce7" : "#fee2e2"
+
+                RowLayout {
+                    anchors.fill: parent
+                    anchors.leftMargin: 16
+                    anchors.rightMargin: 16
+                    Text {
+                        text: parent.parent.changeAmt >= 0 ? "Vuelto:" : "Falta:"
+                        font.pixelSize: 15; font.family: "Inter"
+                        color: parent.parent.changeAmt >= 0 ? "#16a34a" : "#dc2626"
+                        Layout.fillWidth: true
+                    }
+                    Text {
+                        text: "$" + Math.abs(parent.parent.changeAmt).toFixed(0)
+                        font.pixelSize: 22; font.bold: true; font.family: "Inter"
+                        color: parent.parent.changeAmt >= 0 ? "#16a34a" : "#dc2626"
                     }
                 }
             }
-
-            RowLayout {
-                Layout.fillWidth: true
-                Text {
-                    text: "Vuelto:"
-                    font.pixelSize: Theme.sizeLG
-                    font.family: Theme.font
-                    color: Theme.textSecondary
-                    Layout.fillWidth: true
-                }
-                Text {
-                    property double delivered: deliveredInput.text === "" ? 0 : parseFloat(deliveredInput.text)
-                    property double vuelto: delivered - posController.totalAmount
-                    text: vuelto >= 0 ? "$" + vuelto.toFixed(0) : "Falta dinero"
-                    font.pixelSize: Theme.size2XL
-                    font.bold: true
-                    font.family: Theme.font
-                    color: vuelto >= 0 ? Theme.success : Theme.danger
-                }
-            }
         }
 
-        // Tarjeta Specific
-        ColumnLayout {
+        // Card payment info
+        Rectangle {
             Layout.fillWidth: true
-            Layout.fillHeight: true
-            visible: root.paymentMethod === "Tarjeta"
-            
-            Text {
-                text: "Por favor, pase la tarjeta por la terminal bancaria."
-                font.pixelSize: Theme.sizeLG
-                font.family: Theme.font
-                color: Theme.textSecondary
-                horizontalAlignment: Text.AlignHCenter
-                Layout.fillWidth: true
-                Layout.alignment: Qt.AlignVCenter
-                wrapMode: Text.WordWrap
+            height: 80
+            radius: 12
+            visible: method === "Tarjeta"
+            color: "#f8fafc"
+            border.color: "#e2e8f0"
+
+            Column {
+                anchors.centerIn: parent
+                spacing: 6
+                Text { text: "💳"; font.pixelSize: 28; anchors.horizontalCenter: parent.horizontalCenter }
+                Text { text: "Pase la tarjeta por la terminal bancaria"; font.pixelSize: 14; font.family: "Inter"; color: "#475569" }
             }
         }
 
         Item { Layout.fillHeight: true }
 
-        // Actions
+        // Buttons
         RowLayout {
             Layout.fillWidth: true
-            spacing: 15
+            spacing: 12
 
-            ActionButton {
-                text: "Cancelar"
-                buttonColor: Theme.danger
+            Rectangle {
                 Layout.fillWidth: true
-                Layout.preferredHeight: 50
-                onClicked: root.close()
+                height: 48
+                radius: 10
+                color: cancelHover.containsMouse ? "#e2e8f0" : "#f8fafc"
+                border.color: "#e2e8f0"
+                Text { anchors.centerIn: parent; text: "Cancelar"; font.pixelSize: 14; font.bold: true; font.family: "Inter"; color: "#475569" }
+                MouseArea { id: cancelHover; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: root.close() }
             }
 
-            ActionButton {
-                text: "Confirmar Pago"
-                buttonColor: Theme.success
+            Rectangle {
                 Layout.fillWidth: true
-                Layout.preferredHeight: 50
-                // For efectivo, only enable if sufficient funds
-                property bool canConfirm: root.paymentMethod === "Tarjeta" || 
-                    (deliveredInput.text !== "" && parseFloat(deliveredInput.text) >= posController.totalAmount)
-                
-                opacity: canConfirm ? 1.0 : 0.5
-                enabled: canConfirm
+                height: 48
+                radius: 10
+                property bool canPay: {
+                    if (method === "Tarjeta") return true
+                    if (cashInput.text.length === 0) return false
+                    return parseFloat(cashInput.text) >= (posController ? posController.totalAmount : 0)
+                }
+                color: canPay ? (confirmHover.containsMouse ? "#15803d" : "#16a34a") : "#94a3b8"
+                Behavior on color { ColorAnimation { duration: 80 } }
 
-                onClicked: {
-                    posController.checkout(root.paymentMethod)
-                    root.close()
+                Text { anchors.centerIn: parent; text: "✓  Confirmar Pago"; font.pixelSize: 14; font.bold: true; font.family: "Inter"; color: "#ffffff" }
+                MouseArea {
+                    id: confirmHover
+                    anchors.fill: parent
+                    hoverEnabled: true
+                    cursorShape: parent.canPay ? Qt.PointingHandCursor : Qt.ArrowCursor
+                    onClicked: {
+                        if (parent.canPay) {
+                            posController.checkout(method)
+                            root.close()
+                        }
+                    }
                 }
             }
         }
