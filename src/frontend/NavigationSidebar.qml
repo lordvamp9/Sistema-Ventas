@@ -38,8 +38,8 @@ Rectangle {
                     text: "POINT OF SALE"
                     font.pixelSize: 10
                     font.family: "Inter"
+                    font.letterSpacing: 2
                     color: "#7dd3fc"
-                    letterSpacing: 2
                     Layout.alignment: Qt.AlignHCenter
                 }
             }
@@ -49,7 +49,7 @@ Rectangle {
         Rectangle {
             Layout.fillWidth: true
             height: 1
-            color: "rgba(255,255,255,0.15)"
+            color: Qt.rgba(1, 1, 1, 0.15)
             Layout.leftMargin: 20
             Layout.rightMargin: 20
         }
@@ -92,7 +92,7 @@ Rectangle {
         Rectangle {
             Layout.fillWidth: true
             height: 1
-            color: "rgba(255,255,255,0.1)"
+            color: Qt.rgba(1, 1, 1, 0.1)
         }
 
         Text {
@@ -125,8 +125,8 @@ Rectangle {
             anchors.rightMargin: 12
             radius: 8
             color: navItem.active
-                   ? "rgba(255,255,255,0.18)"
-                   : (navHover.containsMouse ? "rgba(255,255,255,0.09)" : "transparent")
+                   ? Qt.rgba(1, 1, 1, 0.18)
+                   : (navHover.containsMouse ? Qt.rgba(1, 1, 1, 0.09) : "transparent")
             Behavior on color { ColorAnimation { duration: 120 } }
 
             // Active indicator bar

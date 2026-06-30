@@ -320,7 +320,7 @@ Item {
                     anchors.fill: parent
                     anchors.margins: 18
                     spacing: 4
-                    Text { text: "TOTAL A PAGAR"; font.pixelSize: 11; font.family: "Inter"; color: "#7dd3fc"; letterSpacing: 2 }
+                    Text { text: "TOTAL A PAGAR"; font.pixelSize: 11; font.family: "Inter"; font.letterSpacing: 2; color: "#7dd3fc" }
                     Text {
                         text: posController ? ("$" + posController.totalAmount.toLocaleString(Qt.locale("es-CL"), "f", 0)) : "$0"
                         font.pixelSize: 36; font.bold: true; font.family: "Inter"; color: "#ffffff"
